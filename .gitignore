@@ -4,6 +4,7 @@
 *.obj
 *.elf
 
+
 # Precompiled Headers
 *.gch
 *.pch
@@ -31,3 +32,11 @@
 # Debug files
 *.dSYM/
 *.su
+
+
+# Other
+*.bin
+*.map
+*.lst
+*.srec
+
