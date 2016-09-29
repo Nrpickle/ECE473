@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include "lcd_functions.h"
 
-//#define DEBOUNCE
+#define DEBOUNCE
 
 char lcd_str[16];                    //holds string to send to lcd
 volatile uint16_t switch_count = 0;  //count switch closures
@@ -34,7 +34,7 @@ void spi_init(void){
 ISR(TIMER0_COMP_vect){
 #ifdef DEBOUNCE 
   static uint16_t state = 0; //holds present state
-  state = (state << 1) | (! bit_is_clear(PIND, 1)) | 0xE000;
+  state = (state << 1) | (! bit_is_clear(PIND, 7)) | 0xE000;
   if (state == 0xF000) {switch_count++;}
 #else 
   //uses 3 state, state machne to make pushbutton code
@@ -67,8 +67,8 @@ int main(void){
   //TCNT0 running in CTC mode
   TIMSK |= (1<<OCIE0);  //enable interrupts
   TCCR0 |= (1<<WGM01);  //CTC mode, no prescale
-  OCR0  |= 0x01;        //sample really, really fast 
-//OCR0  |= 0xFF;        //compare register set at 256
+//  OCR0  |= 0x01;        //sample really, really fast 
+OCR0  |= 0xFF;        //compare register set at 256
 
 TCCR0 |= (1<<CS00);                     //no prescaling
 //TCCR0 |= (1<<CS01)|(1<<CS00);           //prescale by 32
