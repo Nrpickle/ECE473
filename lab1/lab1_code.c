@@ -1,7 +1,8 @@
 // lab1_code.c 
 // R. Traylor
-// Modified by Nick McComb on 9/27/2016
 // 7.21.08
+// Modified by Nick McComb (www.nickmccomb.net) on 9/27/2016
+
 
 //This program increments a binary display of the number of button pushes on switch 
 //S0 on the mega128 board.
