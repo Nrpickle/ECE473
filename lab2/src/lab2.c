@@ -45,9 +45,21 @@ void inline SET_DIGIT_TWO(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2; PORTB = PORTB
 void inline SET_DIGIT_THREE(void) {PORTB |= DIG_SEL_1; PORTB = PORTB & ~(DIG_SEL_2 | DIG_SEL_3);}
 void inline SET_DIGIT_FOUR(void)  {PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3);}
 
+//Tri-State Buffer Enable
+void inline ENABLE_BUFFER(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3;}
+
+//Port A Control
+void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_ONE();} //Enables PORTA as an output, while also ensuring the Tri-state buffer is disabled by selecting digit one
+void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inputs/pullups on PORTA
+
 void configureIO( void );
 void setSegment( uint16_t targetOutput );
 void setDigit( uint8_t targetDigit );
+void processButtonPress( void );
+
+//Global Variables
+uint16_t counter = 0;
+
 
 //******************************************************************************
 //                            chk_buttons                                      
@@ -79,7 +91,10 @@ void segsum(uint16_t sum) {
 //***********************************************************************************
 
 void configureIO( void ){
-  DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
+
+  ENABLE_LED_CONTROL(); 
+
+  //DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
   DDRB = 0xF0; //Upper nibble of the B register is for controlling
 
   //For this lab, we are just driving the PWM_CTRL line low always
@@ -148,6 +163,12 @@ void setDigit( uint8_t targetDigit ){
 
 }
 
+void processButtonPress( void ) {
+  ++counter; 
+}
+
+
+
 //***********************************************************************************
 int main()
 {
@@ -160,24 +181,74 @@ while(1){
 
   PORTB |= DIG_SEL_1 | DIG_SEL_2;
 
-  SET_DIGIT_FOUR();
-
-  //setSegment(2);
-
   int i, j, k;
 
+  ENABLE_LED_CONTROL();
+
+  int16_t lastEntered;
+  int16_t debounceCounter = 0;
+  uint8_t unpressed = 1;
+
   while(1){
-    for(i = 0; i < 10; ++i){
-      setSegment(i);
-      //_delay_ms(250);
-      for(k = 0; k < 100; ++k){
-        for(j = 1; j < 5; ++j){
-          setDigit(j);
-	  _delay_ms(1);
-        }
+    setSegment(counter);
+    //_delay_ms(250);
+    for(k = 0; k < 100; ++k){
+      for(j = 1; j < 5; ++j){
+        setDigit(j);
+        _delay_us(12);
+      }
+    }
+
+    ENABLE_BUTTON_READ();
+    ENABLE_BUFFER();
+    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. 20,000X more than a no
+
+/*
+
+goal: accept button if pressed
+
+If press
+  check for
+
+
+*/
+
+    if(PINA != 0xFF){ //If the buttons read anything
+      if(unpressed){
+        processButtonPress();
+	unpressed = 0;
+      }
+      //if(debounceCounter == 0){
+      //   processButtonPress();
+      //   debounceCounter++;
+      //}
+      else if(PINA == lastEntered){
+        ++debounceCounter;
+	//if(debounceCounter > 25){ //200mS debounce wait
+	  //processButtonPress();
+	//  debounceCounter = 0;
+	//}
+      }
+      else if(PINA != lastEntered){
+        processButtonPress();
+	debounceCounter = 1;
       }
 
+      lastEntered = PINA;
     }
+    else {
+      unpressed = 1;
+    }
+
+    ENABLE_LED_CONTROL();
+
+    _delay_us(20);
+
+    if(counter > 9)
+      counter = 0;
+
+    //This loop will take 40mS
+
   }
   
   //insert loop delay for debounce
