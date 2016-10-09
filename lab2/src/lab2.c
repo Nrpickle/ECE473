@@ -59,7 +59,7 @@ void processButtonPress( void );
 
 //Global Variables
 uint16_t counter = 0;
-
+uint32_t  output[5];
 
 //******************************************************************************
 //                            chk_buttons                                      
@@ -100,6 +100,14 @@ void configureIO( void ){
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
   //(it defaults to low)
+
+  uint8_t i;
+
+
+  //Init output to 0
+  for(i = 0; i < 5; ++i){
+    output[i] = 0;
+  }
 	
 }
 
@@ -148,15 +156,19 @@ void setSegment( uint16_t targetOutput ){
 void setDigit( uint8_t targetDigit ){ 
   switch(targetDigit){
     case 1:
+      setSegment(output[1]);
       SET_DIGIT_ONE();
       break;
     case 2:
+      setSegment(output[2]);
       SET_DIGIT_TWO();
       break;
     case 3:
+      setSegment(output[3]);
       SET_DIGIT_THREE();
       break;
     case 4:
+      setSegment(output[4]);
       SET_DIGIT_FOUR();
       break;
   }
@@ -164,7 +176,23 @@ void setDigit( uint8_t targetDigit ){
 }
 
 void processButtonPress( void ) {
-  ++counter; 
+  ++counter;
+
+  uint16_t tempCounter = counter;
+  //calculate new output values
+  output[4] = tempCounter % 10;
+  tempCounter /= 10;
+  output[3] = tempCounter % 10;
+  tempCounter /= 10;
+  output[2] = tempCounter % 10;
+  tempCounter /= 10;
+  output[1] = tempCounter % 10;
+  
+  
+  //output[2] = counter / 100 - (counter/1000)*10;
+  //output[1] = counter / 1000;
+
+  //output[2] = 7;
 }
 
 
@@ -175,11 +203,6 @@ int main()
 //set port bits 4-7 B as outputs
 while(1){
   configureIO();
-  //_delay_ms(300);
-
-  //PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3);  //Select decoder 0 output (enable digit 4)
-
-  PORTB |= DIG_SEL_1 | DIG_SEL_2;
 
   int i, j, k;
 
@@ -190,44 +213,28 @@ while(1){
   uint8_t unpressed = 1;
 
   while(1){
-    setSegment(counter);
+    //setSegment(counter);
     //_delay_ms(250);
     for(k = 0; k < 100; ++k){
       for(j = 1; j < 5; ++j){
         setDigit(j);
-        _delay_us(12);
+        _delay_us(100); //Lowest tested to be 100uS because of light bleed, can recomfirm
+
       }
     }
 
     ENABLE_BUTTON_READ();
     ENABLE_BUFFER();
-    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. 20,000X more than a no
+    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all
 
-/*
-
-goal: accept button if pressed
-
-If press
-  check for
-
-
-*/
 
     if(PINA != 0xFF){ //If the buttons read anything
       if(unpressed){
         processButtonPress();
 	unpressed = 0;
       }
-      //if(debounceCounter == 0){
-      //   processButtonPress();
-      //   debounceCounter++;
-      //}
       else if(PINA == lastEntered){
         ++debounceCounter;
-	//if(debounceCounter > 25){ //200mS debounce wait
-	  //processButtonPress();
-	//  debounceCounter = 0;
-	//}
       }
       else if(PINA != lastEntered){
         processButtonPress();
@@ -243,9 +250,6 @@ If press
     ENABLE_LED_CONTROL();
 
     _delay_us(20);
-
-    if(counter > 9)
-      counter = 0;
 
     //This loop will take 40mS
 
