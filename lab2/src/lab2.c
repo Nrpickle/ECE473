@@ -59,7 +59,7 @@ void processButtonPress( void );
 
 //Global Variables
 uint16_t counter = 0;
-uint32_t  output[5];
+uint32_t  output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 
 //******************************************************************************
 //                            chk_buttons                                      
@@ -95,7 +95,7 @@ void configureIO( void ){
   ENABLE_LED_CONTROL(); 
 
   //DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
-  DDRB = 0xF0; //Upper nibble of the B register is for controlling
+  DDRB = 0xF0; //Upper nibble of the B register is for controlling the decoder / PWM Transistor
 
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
@@ -176,7 +176,11 @@ void setDigit( uint8_t targetDigit ){
 }
 
 void processButtonPress( void ) {
-  ++counter;
+  counter += 0xFF - PINA;
+
+  if(counter >= 1024){
+    counter -= 1023;
+  }
 
   uint16_t tempCounter = counter;
   //calculate new output values
@@ -187,12 +191,7 @@ void processButtonPress( void ) {
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
-  
-  
-  //output[2] = counter / 100 - (counter/1000)*10;
-  //output[1] = counter / 1000;
 
-  //output[2] = 7;
 }
 
 
