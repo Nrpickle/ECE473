@@ -1,5 +1,5 @@
 SHELL               = /bin/bash
-PRG                 = switch_example
+PRG                 = lab2
 OBJS                = lab2.o  
 SRCS                = lab2.c 
 MCU_TARGET          = atmega128
