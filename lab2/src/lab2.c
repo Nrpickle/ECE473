@@ -224,15 +224,15 @@ while(1){
 
     ENABLE_BUTTON_READ();
     ENABLE_BUFFER();
-    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all
+    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though.
 
 
     if(PINA != 0xFF){ //If the buttons read anything
       if(unpressed){
         processButtonPress();
-	unpressed = 0;
+	unpressed = 0; //Latches the button press
       }
-      else if(PINA == lastEntered){
+      else if(PINA == lastEntered){ //Don't preform any action
         ++debounceCounter;
       }
       else if(PINA != lastEntered){
@@ -243,7 +243,7 @@ while(1){
       lastEntered = PINA;
     }
     else {
-      unpressed = 1;
+      unpressed = 1;  //Release the latch
     }
 
     ENABLE_LED_CONTROL();
