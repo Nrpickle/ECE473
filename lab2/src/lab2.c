@@ -1,4 +1,4 @@
-// lab2_skel.c 
+// ECE 473 Lab 2
 // R. Traylor
 // 9.12.08
 //Modified in October 2016 by Nick McComb | www.nickmccomb.net
@@ -52,8 +52,10 @@ void inline ENABLE_BUFFER(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3;}
 void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_ONE();} //Enables PORTA as an output, while also ensuring the Tri-state buffer is disabled by selecting digit one
 void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inputs/pullups on PORTA
 
+//Function prototypes
 void configureIO( void );
 void inline setSegment( uint16_t targetOutput );
+void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
 
@@ -61,8 +63,7 @@ void processButtonPress( void );
 uint16_t counter = 0;
 uint32_t  output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 
-
-//Configures the device IO
+//Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
 
   ENABLE_LED_CONTROL(); 
@@ -73,9 +74,7 @@ void configureIO( void ){
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
   //(it defaults to low)
-
   uint8_t i;
-
 
   //Init output to 0
   for(i = 0; i < 5; ++i){
@@ -122,9 +121,11 @@ void inline setSegment( uint16_t targetOutput ){
        break; 
      case 11: //B
        break;
-      
   }
- 
+}
+
+void inline clearSegment( void ){
+  PORTA = 0xFF;
 }
 
 //Sets the decoder to choose the appropriate transistor for the appropriate digit. 
@@ -193,19 +194,21 @@ while(1){
   uint8_t unpressed = 1;
 
   while(1){  //Main control loop
-    for(k = 0; k < 50; ++k){
+    for(k = 0; k < 15; ++k){
       for(j = 1; j < 5; ++j){
         setDigit(j);
-        _delay_us(300); //Lowest tested to be 100uS because of light bleed, can recomfirm
+        _delay_us(750); //Lowest tested to be 750uS because of light bleed, can recomfirm
 
       }
     }
 
     ENABLE_BUTTON_READ();
     ENABLE_BUFFER();
-    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though.
+    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
 
     //Latching button debounce
+    //The delay from the for loop at the beginning of this while(1) block will handle
+    //most of the important debouncing delay, so we can just use a latch here.
     if(PINA != 0xFF){ //If the buttons read anything
       if(unpressed){
         processButtonPress();
@@ -226,9 +229,7 @@ while(1){
     }
 
     ENABLE_LED_CONTROL();
-
-    _delay_us(20);
-
+    _delay_us(20);  //Delay to allow voltages to settle
   }
   
   }//while
