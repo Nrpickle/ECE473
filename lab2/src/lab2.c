@@ -16,6 +16,8 @@
 #include <util/delay.h>
 #include <stddef.h>
 
+//Program controls
+#define LEADING_0  //Whether or not you want leading zeros
 
 //Segment pin definitions
 #define SEG_A  0x01
@@ -196,7 +198,25 @@ while(1){
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
       for(j = 1; j < 5; ++j){
+        clearSegment();
+        _delay_us(500);
+
         setDigit(j);
+	//Hack to remove leading zeroes
+	#ifdef LEADING_0
+        if(j == 3){
+          if(counter < 10)
+	    clearSegment();
+	}
+	else if (j == 2){
+          if(counter < 100)
+	    clearSegment();
+	}
+	else if (j == 1){
+          if(counter < 1000)
+	    clearSegment();
+	}
+	#endif
         _delay_us(750); //Lowest tested to be 750uS because of light bleed, can recomfirm
 
       }
