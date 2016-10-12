@@ -41,7 +41,7 @@ int main() {
   sei();                             //enable global interrupts
   
   while(1){
-    if(ext_count == 127){     //blink light at 1sec intervals
+    if(ext_count == 255){     //blink light at 1sec intervals
       PORTB++;                //increment count pattern
       ext_count=0;            //reset the count 
     } 
