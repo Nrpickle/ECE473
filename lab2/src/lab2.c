@@ -53,7 +53,7 @@ void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_ONE();} //Enables P
 void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inputs/pullups on PORTA
 
 void configureIO( void );
-void setSegment( uint16_t targetOutput );
+void inline setSegment( uint16_t targetOutput );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
 
@@ -61,35 +61,8 @@ void processButtonPress( void );
 uint16_t counter = 0;
 uint32_t  output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 
-//******************************************************************************
-//                            chk_buttons                                      
-//Checks the state of the button number passed to it. It shifts in ones till   
-//the button is pushed. Function returns a 1 only once per debounced button    
-//push so a debounce and toggle function can be implemented at the same time.  
-//Adapted to check all buttons from Ganssel's "Guide to Debouncing"            
-//Expects active low pushbuttons on PINA port.  Debounce time is determined by 
-//external loop delay times 12. 
-//
-uint8_t chk_buttons(uint8_t button) {
-//******************************************************************************
 
-//***********************************************************************************
-//                                   segment_sum                                    
-//takes a 16-bit binary input value and places the appropriate equivalent 4 digit 
-//BCD segment code in the array segment_data for display.                       
-//array is loaded at exit as:  |digit3|digit2|colon|digit1|digit0|
-
-  return 0;
-}
-
-void segsum(uint16_t sum) {
-  //determine how many digits there are 
-  //break up decimal sum into 4 digit-segments
-  //blank out leading zero digits 
-  //now move data to right place for misplaced colon position
-}//segment_sum
-//***********************************************************************************
-
+//Configures the device IO
 void configureIO( void ){
 
   ENABLE_LED_CONTROL(); 
@@ -111,8 +84,9 @@ void configureIO( void ){
 	
 }
 
-
-void setSegment( uint16_t targetOutput ){
+//Outputs the proper segment based on the input number
+//Note: This function only currently supports 0-9 (as alphas were not needed for the assignment)
+void inline setSegment( uint16_t targetOutput ){
   switch(targetOutput){
      case 0:
        PORTA = ~(SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F);
@@ -153,6 +127,8 @@ void setSegment( uint16_t targetOutput ){
  
 }
 
+//Sets the decoder to choose the appropriate transistor for the appropriate digit. 
+//It also sets the appropriate segment outputs.
 void setDigit( uint8_t targetDigit ){ 
   switch(targetDigit){
     case 1:
@@ -175,6 +151,8 @@ void setDigit( uint8_t targetDigit ){
 
 }
 
+//This function is called when a button is pressed, and handles processing the press, as well as
+//changing tne numbers that are to be outputted.
 void processButtonPress( void ) {
   counter += 0xFF - PINA;
 
@@ -182,6 +160,9 @@ void processButtonPress( void ) {
     counter -= 1023;
   }
 
+  //We want to calculate the presses here, and not every time, as they can take some time,
+  //and the user will be more tolerable of a slight sutter at a button press, but not every
+  //execution cycle. (In theory. In practice, this math will be unnoticable). 
   uint16_t tempCounter = counter;
   //calculate new output values
   output[4] = tempCounter % 10;
@@ -211,13 +192,11 @@ while(1){
   int16_t debounceCounter = 0;
   uint8_t unpressed = 1;
 
-  while(1){
-    //setSegment(counter);
-    //_delay_ms(250);
-    for(k = 0; k < 100; ++k){
+  while(1){  //Main control loop
+    for(k = 0; k < 50; ++k){
       for(j = 1; j < 5; ++j){
         setDigit(j);
-        _delay_us(100); //Lowest tested to be 100uS because of light bleed, can recomfirm
+        _delay_us(300); //Lowest tested to be 100uS because of light bleed, can recomfirm
 
       }
     }
@@ -226,7 +205,7 @@ while(1){
     ENABLE_BUFFER();
     _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though.
 
-
+    //Latching button debounce
     if(PINA != 0xFF){ //If the buttons read anything
       if(unpressed){
         processButtonPress();
@@ -250,21 +229,7 @@ while(1){
 
     _delay_us(20);
 
-    //This loop will take 40mS
-
   }
   
-  //insert loop delay for debounce
-  //make PORTA an input port with pullups 
-  //enable tristate buffer for pushbutton switches
-  //now check each button and increment the count as needed
-  //disable tristate buffer for pushbutton switches
-  //bound the count to 0 - 1023
-  //break up the disp_value to 4, BCD digits in the array: call (segsum)
-  //bound a counter (0-4) to keep track of digit to display 
-  //make PORTA an output
-  //send 7 segment code to LED segments
-  //send PORTB the digit to display
-  //update digit to display
   }//while
 }//main
