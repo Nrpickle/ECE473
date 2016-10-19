@@ -278,7 +278,9 @@ while(1){
       }
     }
     
+    checkButtons();
 
+    /*
     ENABLE_BUTTON_READ();
     ENABLE_BUFFER();
     _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
@@ -307,6 +309,7 @@ while(1){
 
     ENABLE_LED_CONTROL();
     _delay_us(20);  //Delay to allow voltages to settle
+    */
   }
   
   }//while
