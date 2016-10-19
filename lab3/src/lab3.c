@@ -18,7 +18,7 @@
 #include <stddef.h>
 
 //Program controls
-//#define LEADING_0  //Whether or not you want leading zeros
+#define LEADING_0  //Whether or not you want leading zeros
 
 //Segment pin definitions
 #define SEG_A  0x01
@@ -106,9 +106,11 @@ void configureTimers( void ){
 ISR(TIMER0_OVF_vect){
 
   //Testing code
-  output[1] += 1;
-  if(output[1] == 10)
-    output[1] = 0;
+  //output[1] += 1;
+  //if(output[1] == 10)
+  //  output[1] = 0;
+
+  checkButtons();
   
 }
 
@@ -233,7 +235,7 @@ void inline checkButtons( void ){
   }
 
   ENABLE_LED_CONTROL();
-  _delay_us(20);  //Delay to allow voltages to settle
+  //_delay_us(20);  //Delay to allow voltages to settle
   
 }
 
@@ -255,7 +257,7 @@ while(1){
     for(k = 0; k < 15; ++k){
       for(j = 1; j < 5; ++j){
         clearSegment();
-        _delay_us(500);
+        _delay_us(250);
 
         setDigit(j);
 	//Hack to remove leading zeroes
@@ -273,12 +275,12 @@ while(1){
 	    clearSegment();
 	}
 	#endif
-        _delay_us(750); //Lowest tested to be 750uS because of light bleed, can recomfirm
+        _delay_us(100); //Lowest tested to be 750uS because of light bleed, can recomfirm
 
       }
     }
     
-    checkButtons();
+    //checkButtons();
 
     /*
     ENABLE_BUTTON_READ();
