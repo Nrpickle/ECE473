@@ -13,11 +13,12 @@
 #define TRUE 1
 #define FALSE 0
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stddef.h>
 
 //Program controls
-#define LEADING_0  //Whether or not you want leading zeros
+//#define LEADING_0  //Whether or not you want leading zeros
 
 //Segment pin definitions
 #define SEG_A  0x01
@@ -56,14 +57,19 @@ void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inpu
 
 //Function prototypes
 void configureIO( void );
+void configureTimers( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
+void inline checkButtons( void );
 
 //Global Variables
 uint16_t counter = 0;
-uint32_t  output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
+uint32_t output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
+int16_t  lastEntered = 0;
+int16_t  debounceCounter = 0;
+uint8_t  unpressed = 1;
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -83,6 +89,27 @@ void configureIO( void ){
     output[i] = 0;
   }
 	
+}
+
+//Configures all timer/counters on the device
+void configureTimers( void ){
+  //Timer 0 configure: Polling buttons
+  TIMSK |= (1<<TOIE0); //Enable overflow interrupts
+  TCCR0 |= (1<<CS02) | (1<<CS01) | (1<<CS00);  //Normal mode, prescale by 1024
+
+  //OCR0 Output Compare Register
+
+}
+
+//Timer 0 overflow vector
+//Polls the buttons
+ISR(TIMER0_OVF_vect){
+
+  //Testing code
+  output[1] += 1;
+  if(output[1] == 10)
+    output[1] = 0;
+  
 }
 
 //Outputs the proper segment based on the input number
@@ -178,7 +205,37 @@ void processButtonPress( void ) {
 
 }
 
+void inline checkButtons( void ){
+  ENABLE_BUTTON_READ();
+  ENABLE_BUFFER();
+  _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
 
+  //Latching button debounce
+  //The delay from the for loop at the beginning of this while(1) block will handle
+  //most of the important debouncing delay, so we can just use a latch here.
+  if(PINA != 0xFF){ //If the buttons read anything
+    if(unpressed){
+      processButtonPress();
+      unpressed = 0; //Latches the button press
+    }
+    else if(PINA == lastEntered){ //Don't preform any action
+      ++debounceCounter;
+    }
+    else if(PINA != lastEntered){
+      processButtonPress();
+      debounceCounter = 1;
+    }
+
+    lastEntered = PINA;
+  }
+  else {
+    unpressed = 1;  //Release the latch
+  }
+
+  ENABLE_LED_CONTROL();
+  _delay_us(20);  //Delay to allow voltages to settle
+  
+}
 
 //***********************************************************************************
 int main()
@@ -186,14 +243,13 @@ int main()
 //set port bits 4-7 B as outputs
 while(1){
   configureIO();
+  configureTimers();
+  sei();
 
-  int i, j, k;
+
+  int j, k;
 
   ENABLE_LED_CONTROL();
-
-  int16_t lastEntered;
-  int16_t debounceCounter = 0;
-  uint8_t unpressed = 1;
 
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
@@ -221,6 +277,7 @@ while(1){
 
       }
     }
+    
 
     ENABLE_BUTTON_READ();
     ENABLE_BUFFER();
