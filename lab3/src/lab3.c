@@ -58,6 +58,7 @@ void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inpu
 //Function prototypes
 void configureIO( void );
 void configureTimers( void );
+void configureSPI( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
@@ -78,6 +79,9 @@ void configureIO( void ){
 
   //DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
   DDRB = 0xF0; //Upper nibble of the B register is for controlling the decoder / PWM Transistor
+
+  //DDRB |= 0x07;  //Setup the SPI pins as outputs
+  //SPCR |= (1<<SPE)
 
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
@@ -105,12 +109,12 @@ void configureTimers( void ){
 //Polls the buttons
 ISR(TIMER0_OVF_vect){
 
-  //Testing code
-  //output[1] += 1;
-  //if(output[1] == 10)
-  //  output[1] = 0;
-
   checkButtons();
+  
+}
+
+//Setup SPI on the interface
+void configureSPI( void ){
   
 }
 
@@ -280,38 +284,6 @@ while(1){
       }
     }
     
-    //checkButtons();
-
-    /*
-    ENABLE_BUTTON_READ();
-    ENABLE_BUFFER();
-    _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
-
-    //Latching button debounce
-    //The delay from the for loop at the beginning of this while(1) block will handle
-    //most of the important debouncing delay, so we can just use a latch here.
-    if(PINA != 0xFF){ //If the buttons read anything
-      if(unpressed){
-        processButtonPress();
-	unpressed = 0; //Latches the button press
-      }
-      else if(PINA == lastEntered){ //Don't preform any action
-        ++debounceCounter;
-      }
-      else if(PINA != lastEntered){
-        processButtonPress();
-	debounceCounter = 1;
-      }
-
-      lastEntered = PINA;
-    }
-    else {
-      unpressed = 1;  //Release the latch
-    }
-
-    ENABLE_LED_CONTROL();
-    _delay_us(20);  //Delay to allow voltages to settle
-    */
   }
   
   }//while
