@@ -9,6 +9,12 @@
 //  PORTB bits 4-6 go to a,b,c inputs of the 74HC138.
 //  PORTB bit 7 goes to the PWM transistor base.
 
+//  BARGRAPH SETUP:
+//  regclk   PORTB bit 0 (SS_n)
+//  srclk    PORTB bit 1 (SCLK)
+//  sdin     PORTB bit 2 (MOSI)
+//  oe_n     GND
+
 //#define F_CPU 16000000 // cpu speed in hertz 
 #define TRUE 1
 #define FALSE 0
@@ -64,6 +70,8 @@ void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
 void inline checkButtons( void );
+void inline writeBarGraph( uint8_t targetOutput );
+
 
 //Global Variables
 uint16_t counter = 0;
@@ -80,8 +88,7 @@ void configureIO( void ){
   //DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
   DDRB = 0xF0; //Upper nibble of the B register is for controlling the decoder / PWM Transistor
 
-  //DDRB |= 0x07;  //Setup the SPI pins as outputs
-  //SPCR |= (1<<SPE)
+  DDRB |= 0x07;  //Setup the SPI pins as outputs
 
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
@@ -115,8 +122,17 @@ ISR(TIMER0_OVF_vect){
 
 //Setup SPI on the interface
 void configureSPI( void ){
-  
+
+  //Configure SPI
+  //Master mode, clk low on idle, leading edge sample
+  SPCR = (1 << SPE) | (1 << MSTR) | (1 << CPOL) | (1 << CPHA);   
+
+  //Chose double speed operation
+  SPSR = (1 << SPI2X);
+
+
 }
+
 
 //Outputs the proper segment based on the input number
 //Note: This function only currently supports 0-9 (as alphas were not needed for the assignment)
@@ -243,6 +259,20 @@ void inline checkButtons( void ){
   
 }
 
+//Writes out to the bar graph AND reads in from the encoder!
+void inline writeBarGraph( uint8_t targetOutput ){
+  //Output over SPI
+  SPDR = targetOutput;
+  while (bit_is_clear(SPSR, SPIF)){};  //Wait for data to write
+
+  //Write out to bar graph
+  PORTB |=  0x01;
+  PORTB &= ~0x01;
+
+  //TODO: Read from encoder
+}
+
+
 //***********************************************************************************
 int main()
 {
@@ -250,6 +280,7 @@ int main()
 while(1){
   configureIO();
   configureTimers();
+  configureSPI();
   sei();
 
 
@@ -284,6 +315,16 @@ while(1){
       }
     }
     
+
+    writeBarGraph(0x20);
+    //bar graph test
+    //SPDR = 0x08;
+    //while (bit_is_clear(SPSR, SPIF)){}
+
+    //PORTB |=  0x01;
+    //PORTB &= ~0x01;
+
+
   }
   
   }//while
