@@ -39,13 +39,30 @@ PrefsVaultGUID=
 PrefsRevisionGUID=
 
 [Document1]
-DocumentPath=Main.SchDoc
+DocumentPath=barGraph.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
 AnnotateSuffix=
 AnnotateScope=All
-AnnotateOrder=-1
+AnnotateOrder=1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=NVMHUBJE
+
+[Document2]
+DocumentPath=uC.SchDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=2
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
 ClassGenCCAutoEnabled=1
@@ -55,14 +72,14 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=ATUXSGBO
 
-[Document2]
+[Document3]
 DocumentPath=7Seg.SchDoc
 AnnotationEnabled=1
 AnnotateStartValue=1
 AnnotationIndexControlEnabled=0
 AnnotateSuffix=
 AnnotateScope=All
-AnnotateOrder=-1
+AnnotateOrder=0
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
 ClassGenCCAutoEnabled=1
@@ -72,7 +89,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=HJJCXWMV
 
-[Document3]
+[Document4]
 DocumentPath=lab2.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -89,7 +106,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=SFOJXQTB
 
-[Document4]
+[Document5]
 DocumentPath=lab2.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
