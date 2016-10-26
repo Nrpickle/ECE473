@@ -264,6 +264,8 @@ void setDigit( uint8_t targetDigit ){
       break;
   }
 
+  //clearSegment();
+
 }
 
 //This function is called when a button is pressed, and handles processing the press, as well as
@@ -454,27 +456,11 @@ while(1){
     for(k = 0; k < 15; ++k){
       for(j = 1; j < 5; ++j){
         //clearSegment();
-        _delay_us(500);
-
-	
+        _delay_us(50);
 	
 	setDigit(j);  //Contains 100uS delay
-	//Hack to remove leading zeroes
-	#ifdef LEADING_0
-        if(j == 3){
-          if(counter < 10)
-	    clearSegment();
-	}
-	else if (j == 2){
-          if(counter < 100)
-	    clearSegment();
-	}
-	else if (j == 1){
-          if(counter < 1000)
-	    clearSegment();
-	}
-	#endif
-        _delay_us(100); //Lowest tested to be 750uS because of light bleed, can recomfirm
+	
+        _delay_us(150); //Lowest tested to be 750uS because of light bleed, can recomfirm
 
         clearSegment();
 
