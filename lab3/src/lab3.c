@@ -149,7 +149,7 @@ void configureIO( void ){
 void configureTimers( void ){
   //Timer 0 configure: Polling buttons
   TIMSK |= (1<<TOIE0); //Enable overflow interrupts
-  TCCR0 |= (1<<CS02) | (1<<CS01) | (0<<CS00);  //Normal mode, prescale by 1024
+  TCCR0 |= (1<<CS02) | (1<<CS01) | (0<<CS00);  //Normal mode, prescale 
 
   //OCR0 Output Compare Register
 
@@ -298,7 +298,7 @@ void processButtonPress( void ){
 void processCounterOutput( void ){
   //We want to check for overflow/underflow here
   if(counter < 10000 && counter > 1023) //Check for simple overflow
-    counter = counter % 1024;
+    counter = (counter % 1024) + 1;
  
   if(counter > 10000) //Check for overflow, because variable is a uint, it will wrap around
     counter = 1023;
