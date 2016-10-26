@@ -1,0 +1,11 @@
+Turning right:
+
+3 -> 2 -> 0 -> 1
+
+Turning left:
+
+3 -> 1 -> 0 -> 2 
+
+So, if you make a 1 to 3 transition, you are turning right
+
+If you make a 2 to 3 transition you are turning left
