@@ -61,6 +61,7 @@ uint16_t counter = 0;
 //Function Dec
 void inline incrementCounter( void );
 void inline decrementCounter( void );
+void setDigit( uint8_t targetDigit );
 //TODO: Move rest of function decs
 
 //TODO: Remove all of this shit
@@ -78,7 +79,7 @@ void inline SET_DIGIT_FOUR(void)  {PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2 | DIG
 void inline ENABLE_BUFFER(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3;}
 
 //Port A Control
-void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_ONE();} //Enables PORTA as an output, while also ensuring the Tri-state buffer is disabled by selecting digit one
+void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_THREE(); PORTB |= DIG_SEL_3;} //Enables PORTA as an output, while also ensuring the Tri-state buffer is disabled by selecting digit one
 void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inputs/pullups on PORTA
 
 void inline ENC_CLK_ENABLE(void)  {PORTE &= ~(0x40);}
@@ -102,7 +103,7 @@ void configureTimers( void );
 void configureSPI( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
-void setDigit( uint8_t targetDigit );
+//void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
 void processCounterOutput( void );
 void inline checkButtons( void );
@@ -229,21 +230,32 @@ void inline clearSegment( void ){
 //It also sets the appropriate segment outputs.
 void setDigit( uint8_t targetDigit ){ 
   switch(targetDigit){
+
+    clearSegment();
+
     case 1:
-      setSegment(output[1]);
       SET_DIGIT_ONE();
+      _delay_us(100);
+      setSegment(output[1]);
+//      SET_DIGIT_ONE();
       break;
     case 2:
-      setSegment(output[2]);
       SET_DIGIT_TWO();
+      _delay_us(100);
+      setSegment(output[2]);
+//      SET_DIGIT_TWO();
       break;
     case 3:
-      setSegment(output[3]);
       SET_DIGIT_THREE();
+      _delay_us(100);
+      setSegment(output[3]);
+//      SET_DIGIT_THREE();
       break;
     case 4:
-      setSegment(output[4]);
       SET_DIGIT_FOUR();
+      _delay_us(100);
+      setSegment(output[4]);
+      //SET_DIGIT_FOUR();
       break;
   }
 
@@ -394,7 +406,7 @@ void inline incrementCounter( void ){
   if(inc2Bool & inc4Bool)
     NOP();
   else if (inc2Bool)
-    counter += counter + 2;
+    counter += 2;
   else if (inc4Bool)
     counter += 4;
   else
@@ -436,10 +448,20 @@ while(1){
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
       for(j = 1; j < 5; ++j){
-        clearSegment();
-        _delay_us(250);
+        //clearSegment();
+        _delay_us(500);
 
-        setDigit(j);
+/*
+        switch(j){
+          case 4:
+	    SET_DIGIT_FOUR();
+	    _delay_us(100);
+	    setSegment(output[4]);
+	}
+*/	
+	
+	
+	setDigit(j);  //Contains 100uS delay
 	//Hack to remove leading zeroes
 	#ifdef LEADING_0
         if(j == 3){
@@ -456,6 +478,8 @@ while(1){
 	}
 	#endif
         _delay_us(100); //Lowest tested to be 750uS because of light bleed, can recomfirm
+
+        clearSegment();
 
       }
     }
