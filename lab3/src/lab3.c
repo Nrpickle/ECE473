@@ -1,7 +1,7 @@
-// ECE 473 Lab 2
+// ECE 473 Lab 3
 // R. Traylor
 // 9.12.08
-//Modified in October 2016 by Nick McComb | www.nickmccomb.net
+// Modified in October 2016 by Nick McComb | www.nickmccomb.net
 
 //  HARDWARE SETUP:
 //  PORTA is connected to the segments of the LED display. and to the pushbuttons.
@@ -16,7 +16,9 @@
 //  oe_n     GND
 
 //  ENCODER SETUP
-//    	PORTE bit 6
+//  sck         PORTB bit 1
+//  ENC_CLK_INH PORTE bit 6
+//  ENC_SH/LD   PORTE bit 7
 
 //TODO: CHECK WITH STEVEN ABOUT OVERFLOW
 
@@ -58,10 +60,21 @@ uint16_t counter = 0;
 //TODO: Add rest of globals
 
 
-//Function Dec
+//Function Prototypes
 void inline incrementCounter( void );
 void inline decrementCounter( void );
 void setDigit( uint8_t targetDigit );
+void configureIO( void );
+void configureTimers( void );
+void configureSPI( void );
+void inline setSegment( uint16_t targetOutput );
+void inline clearSegment( void );
+void processButtonPress( void );
+void processCounterOutput( void );
+void inline checkButtons( void );
+void inline updateSPI( void );
+void processEncoders( void );
+
 //TODO: Move rest of function decs
 
 //TODO: Remove all of this shit
@@ -94,21 +107,8 @@ void inline ENC_L_COUNTDOWN(void) {decrementCounter();}
 void inline ENC_R_COUNTUP(void)   {incrementCounter();}
 void inline ENC_R_COUNTDOWN(void) {decrementCounter();}
 
-
+//NOP delay
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
-
-//Function prototypes
-void configureIO( void );
-void configureTimers( void );
-void configureSPI( void );
-void inline setSegment( uint16_t targetOutput );
-void inline clearSegment( void );
-//void setDigit( uint8_t targetDigit );
-void processButtonPress( void );
-void processCounterOutput( void );
-void inline checkButtons( void );
-void inline updateSPI( void );
-void processEncoders( void );
 
 //Global Variables
 uint32_t output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
@@ -164,7 +164,6 @@ ISR(TIMER0_OVF_vect){
   updateSPI();
   
   processEncoders();
-
 }
 
 //Setup SPI on the interface
@@ -179,7 +178,6 @@ void configureSPI( void ){
 
 
 }
-
 
 //Outputs the proper segment based on the input number
 //Note: This function only currently supports 0-9 (as alphas were not needed for the assignment)
@@ -222,12 +220,14 @@ void inline setSegment( uint16_t targetOutput ){
   }
 }
 
+//Clears the segments so nothing is being outputted on the port
 void inline clearSegment( void ){
   PORTA = 0xFF;
 }
 
 //Sets the decoder to choose the appropriate transistor for the appropriate digit. 
 //It also sets the appropriate segment outputs.
+//NOTE: There is an inherient 100uS delay with any call of this function
 void setDigit( uint8_t targetDigit ){ 
   switch(targetDigit){
 
@@ -293,6 +293,8 @@ void processButtonPress( void ){
 
 }  
  
+//This function processess the output of the counter variable.
+//It checks for overflow conditions, and then calculates the numbers to be outputted on each 7 segment digit
 void processCounterOutput( void ){
   //We want to check for overflow/underflow here
   if(counter < 10000 && counter > 1023) //Check for simple overflow
@@ -316,6 +318,8 @@ void processCounterOutput( void ){
 
 }
 
+//Checks the buttons when called, and calls a seperate processing function once the buttons have been debounced
+//It will call it only once per button press, and resets upon button release.
 void inline checkButtons( void ){
   ENABLE_BUTTON_READ();
   ENABLE_BUFFER();
@@ -409,6 +413,7 @@ void processEncoders( void ){
   
 }
 
+//Called to increment the counter variable
 void inline incrementCounter( void ){
   if(inc2Bool & inc4Bool)
     NOP();
@@ -421,6 +426,7 @@ void inline incrementCounter( void ){
     
 }
 
+//Called to decrement the counter variable
 void inline decrementCounter( void ){
   if(inc2Bool & inc4Bool)
     NOP();
@@ -432,7 +438,8 @@ void inline decrementCounter( void ){
     counter -= 1;
 }
 
-//***********************************************************************************
+
+//Main function call
 int main()
 {
 //set port bits 4-7 B as outputs
@@ -466,15 +473,10 @@ while(1){
 
       }
     }
-
-    processCounterOutput();
-   
-
-
-
-    //bargraphOutput = randoTest; //lastEncoderValue;
+	
+    processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
 
   }
   
-  }//while
-}//main
+  }
+}
