@@ -29,7 +29,7 @@
 #include <stddef.h>
 
 //Program controls
-#define LEADING_0  //Whether or not you want leading zeros
+//#define LEADING_0  //Whether or not you want leading zeros
 
 //Segment pin definitions
 #define SEG_A  0x01
@@ -236,26 +236,31 @@ void setDigit( uint8_t targetDigit ){
     case 1:
       SET_DIGIT_ONE();
       _delay_us(100);
-      setSegment(output[1]);
-//      SET_DIGIT_ONE();
+      if(counter < 1000)
+        clearSegment();
+      else
+        setSegment(output[1]);
       break;
     case 2:
       SET_DIGIT_TWO();
       _delay_us(100);
-      setSegment(output[2]);
-//      SET_DIGIT_TWO();
+      if(counter < 100)
+        clearSegment();
+      else
+        setSegment(output[2]);
       break;
     case 3:
       SET_DIGIT_THREE();
       _delay_us(100);
-      setSegment(output[3]);
-//      SET_DIGIT_THREE();
+      if(counter < 10)
+        clearSegment();
+      else
+        setSegment(output[3]);
       break;
     case 4:
       SET_DIGIT_FOUR();
       _delay_us(100);
       setSegment(output[4]);
-      //SET_DIGIT_FOUR();
       break;
   }
 
@@ -451,14 +456,6 @@ while(1){
         //clearSegment();
         _delay_us(500);
 
-/*
-        switch(j){
-          case 4:
-	    SET_DIGIT_FOUR();
-	    _delay_us(100);
-	    setSegment(output[4]);
-	}
-*/	
 	
 	
 	setDigit(j);  //Contains 100uS delay
