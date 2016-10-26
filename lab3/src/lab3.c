@@ -51,6 +51,9 @@ uint8_t segment_data[5];
 //decimal to 7-segment LED display encodings, logic "0" turns on segment
 uint8_t dec_to_7seg[12];
 
+//TODO: Remove all of this shit
+uint8_t randoTest = 0;
+
 //Digit control low-level code
 void inline SET_DIGIT_ONE(void)   {PORTB |= DIG_SEL_3; PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2);}
 void inline SET_DIGIT_TWO(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2; PORTB = PORTB & ~(DIG_SEL_3);}
@@ -70,6 +73,13 @@ void inline ENC_CLK_DISABLE(void) {PORTE |=   0x40 ;}
 void inline ENC_PARALLEL_ENABLE(void)  {PORTE &= ~(0x80);}
 void inline ENC_PARALLEL_DISABLE(void) {PORTE |=   0x80 ;}
 
+//Parsed commands from the encoders (parsed to one call per detent)
+void inline ENC_L_COUNTUP(void)   {}
+void inline ENC_L_COUNTDOWN(void) {}
+void inline ENC_R_COUNTUP(void)   {++randoTest;}
+void inline ENC_R_COUNTDOWN(void) {--randoTest;}
+
+
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
 //Function prototypes
@@ -81,7 +91,9 @@ void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
 void inline checkButtons( void );
-void inline writeBarGraph( uint8_t targetOutput );
+void inline updateSPI( void );
+void processEncoders( void );
+
 
 //Global Variables
 uint16_t counter = 0;
@@ -91,6 +103,7 @@ int16_t  debounceCounter = 0;
 uint8_t  unpressed = 1;
 uint8_t  lastEncoderValue = 0x13;
 uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly measured value
+uint8_t  bargraphOutput = 0;
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -122,18 +135,22 @@ void configureIO( void ){
 void configureTimers( void ){
   //Timer 0 configure: Polling buttons
   TIMSK |= (1<<TOIE0); //Enable overflow interrupts
-  TCCR0 |= (1<<CS02) | (1<<CS01) | (1<<CS00);  //Normal mode, prescale by 1024
+  TCCR0 |= (1<<CS02) | (1<<CS01) | (0<<CS00);  //Normal mode, prescale by 1024
 
   //OCR0 Output Compare Register
 
 }
 
 //Timer 0 overflow vector
-//Polls the buttons
+//Polls the buttons / interfaces with SPI
 ISR(TIMER0_OVF_vect){
 
   checkButtons();
+
+  updateSPI();
   
+  processEncoders();
+
 }
 
 //Setup SPI on the interface
@@ -276,27 +293,15 @@ void inline checkButtons( void ){
 }
 
 //Writes out to the bar graph AND reads in from the encoder!
-void inline writeBarGraph( uint8_t targetOutput ){
-
-  //Output over SPI
-  //SPDR = targetOutput;
-  //while (bit_is_clear(SPSR, SPIF)){};  //Wait for data to write
-
-  //SPSR |= (1 << SPIF);
-
-  //Write out to bar graph
-  //PORTB |=  0x01;
-  //PORTB &= ~0x01;
-
-  //TODO: Read from encoder
+void inline updateSPI( void ){
+  
   ENC_CLK_ENABLE();        //Allow us to read in serial data
   ENC_PARALLEL_DISABLE();  //Allow us to read in serial data
 
-  //_delay_us(1); //Arbritrary delay 
   NOP();
   NOP();
 
-  SPDR = targetOutput;
+  SPDR = bargraphOutput;
   lastEncoderValue = SPDR;
 
   //Wait for SPI operation
@@ -304,17 +309,46 @@ void inline writeBarGraph( uint8_t targetOutput ){
 
   upToDateEncoderValue = 1;
 
-  //_delay_us(1);
-  
   ENC_CLK_DISABLE();
   ENC_PARALLEL_ENABLE();
 
+  //Output the bar graph info
   PORTB |=  0x01;
   PORTB &= ~0x01;
 
-  //lastEncoderValue = 0xFF;
 }
 
+//Processes commands from the encoders
+void processEncoders( void ){
+  uint8_t static lEncoderPrev = 0;
+  uint8_t static rEncoderPrev = 0;
+  uint8_t static lEncoder = 0;
+  uint8_t static rEncoder = 0;
+  
+  lEncoderPrev = lEncoder;
+  rEncoderPrev = rEncoder;
+
+  //Save previous values
+
+  lEncoder =  (lastEncoderValue & 0x03);
+  rEncoder = ((lastEncoderValue & 0x0C) >> 2);
+
+  //bargraphOutput = rEncoder;
+
+  //Check if the values have changed, if so process them
+  if(lEncoder != lEncoderPrev){
+
+  }
+
+  if(rEncoder != rEncoderPrev){
+    if((rEncoderPrev == 0x01) && (rEncoder == 0x03))
+      ENC_R_COUNTUP();
+    if((rEncoderPrev == 0x02) && (rEncoder == 0x03))
+      ENC_R_COUNTDOWN();
+  }
+
+  
+}
 
 //***********************************************************************************
 int main()
@@ -365,7 +399,9 @@ while(1){
    
 
 
-    writeBarGraph(lastEncoderValue);
+    updateSPI();
+
+    bargraphOutput = randoTest; //lastEncoderValue;
 
     if(lastEncoderValue != 0xFF)
       tempBool = 0xF0;
