@@ -467,7 +467,7 @@ while(1){
 	
 	setDigit(j);  //Contains 100uS delay
 	
-        _delay_us(150); //Lowest tested to be 750uS because of light bleed, can recomfirm
+        _delay_us(130); //Lowest tested to be 750uS because of light bleed, can recomfirm
 
         clearSegment();
 
