@@ -144,7 +144,7 @@ void configureSPI( void ){
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << CPOL) | (0 << CPHA);   
 
   //Chose double speed operation
-  SPSR = (1 << SPI2X);
+  //SPSR = (1 << SPI2X);
 
 
 }
@@ -279,35 +279,40 @@ void inline checkButtons( void ){
 void inline writeBarGraph( uint8_t targetOutput ){
 
   //Output over SPI
-  SPDR = targetOutput;
-  while (bit_is_clear(SPSR, SPIF)){};  //Wait for data to write
+  //SPDR = targetOutput;
+  //while (bit_is_clear(SPSR, SPIF)){};  //Wait for data to write
 
   //SPSR |= (1 << SPIF);
 
   //Write out to bar graph
-  PORTB |=  0x01;
-  PORTB &= ~0x01;
+  //PORTB |=  0x01;
+  //PORTB &= ~0x01;
 
   //TODO: Read from encoder
   ENC_CLK_ENABLE();        //Allow us to read in serial data
   ENC_PARALLEL_DISABLE();  //Allow us to read in serial data
 
-  _delay_us(1); //Arbritrary delay 
+  //_delay_us(1); //Arbritrary delay 
+  NOP();
+  NOP();
 
-  SPDR = 0x73;
+  SPDR = targetOutput;
   lastEncoderValue = SPDR;
 
-  //Wait for SPI read
+  //Wait for SPI operation
   while (bit_is_clear(SPSR, SPIF)){};
 
   upToDateEncoderValue = 1;
 
-  _delay_us(1);
+  //_delay_us(1);
   
   ENC_CLK_DISABLE();
   ENC_PARALLEL_ENABLE();
 
+  PORTB |=  0x01;
+  PORTB &= ~0x01;
 
+  //lastEncoderValue = 0xFF;
 }
 
 
@@ -323,6 +328,7 @@ while(1){
 
 
   uint8_t temp_counter = 1;
+  uint8_t tempBool = 0x01;
 
   int j, k;
 
@@ -356,9 +362,13 @@ while(1){
 
       }
     }
-    
+   
+
 
     writeBarGraph(lastEncoderValue);
+
+    if(lastEncoderValue != 0xFF)
+      tempBool = 0xF0;
     //bar graph test
     //SPDR = 0x08;
     //while (bit_is_clear(SPSR, SPIF)){}
