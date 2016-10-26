@@ -15,6 +15,9 @@
 //  sdin     PORTB bit 2 (MOSI)
 //  oe_n     GND
 
+//  ENCODER SETUP
+//    	PORTE bit 6
+
 //#define F_CPU 16000000 // cpu speed in hertz 
 #define TRUE 1
 #define FALSE 0
@@ -61,6 +64,14 @@ void inline ENABLE_BUFFER(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2 | DIG_SEL_3;}
 void inline ENABLE_LED_CONTROL(void) {DDRA = 0xFF; SET_DIGIT_ONE();} //Enables PORTA as an output, while also ensuring the Tri-state buffer is disabled by selecting digit one
 void inline ENABLE_BUTTON_READ(void) {DDRA = 0x00; PORTA = 0xFF;}  //Enable inputs/pullups on PORTA
 
+void inline ENC_CLK_ENABLE(void)  {PORTE &= ~(0x40);}
+void inline ENC_CLK_DISABLE(void) {PORTE |=   0x40 ;}
+
+void inline ENC_PARALLEL_ENABLE(void)  {PORTE &= ~(0x80);}
+void inline ENC_PARALLEL_DISABLE(void) {PORTE |=   0x80 ;}
+
+#define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
+
 //Function prototypes
 void configureIO( void );
 void configureTimers( void );
@@ -72,13 +83,14 @@ void processButtonPress( void );
 void inline checkButtons( void );
 void inline writeBarGraph( uint8_t targetOutput );
 
-
 //Global Variables
 uint16_t counter = 0;
 uint32_t output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 int16_t  lastEntered = 0;
 int16_t  debounceCounter = 0;
 uint8_t  unpressed = 1;
+uint8_t  lastEncoderValue = 0x13;
+uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly measured value
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -99,7 +111,11 @@ void configureIO( void ){
   for(i = 0; i < 5; ++i){
     output[i] = 0;
   }
-	
+
+  DDRE |= 0xC0;  //Enable Clk inhibit pin and async pin as outputs
+  ENC_CLK_DISABLE();
+  ENC_PARALLEL_ENABLE();
+
 }
 
 //Configures all timer/counters on the device
@@ -125,7 +141,7 @@ void configureSPI( void ){
 
   //Configure SPI
   //Master mode, clk low on idle, leading edge sample
-  SPCR = (1 << SPE) | (1 << MSTR) | (1 << CPOL) | (1 << CPHA);   
+  SPCR = (1 << SPE) | (1 << MSTR) | (0 << CPOL) | (0 << CPHA);   
 
   //Chose double speed operation
   SPSR = (1 << SPI2X);
@@ -261,15 +277,37 @@ void inline checkButtons( void ){
 
 //Writes out to the bar graph AND reads in from the encoder!
 void inline writeBarGraph( uint8_t targetOutput ){
+
   //Output over SPI
   SPDR = targetOutput;
   while (bit_is_clear(SPSR, SPIF)){};  //Wait for data to write
+
+  //SPSR |= (1 << SPIF);
 
   //Write out to bar graph
   PORTB |=  0x01;
   PORTB &= ~0x01;
 
   //TODO: Read from encoder
+  ENC_CLK_ENABLE();        //Allow us to read in serial data
+  ENC_PARALLEL_DISABLE();  //Allow us to read in serial data
+
+  _delay_us(1); //Arbritrary delay 
+
+  SPDR = 0x73;
+  lastEncoderValue = SPDR;
+
+  //Wait for SPI read
+  while (bit_is_clear(SPSR, SPIF)){};
+
+  upToDateEncoderValue = 1;
+
+  _delay_us(1);
+  
+  ENC_CLK_DISABLE();
+  ENC_PARALLEL_ENABLE();
+
+
 }
 
 
@@ -284,7 +322,11 @@ while(1){
   sei();
 
 
+  uint8_t temp_counter = 1;
+
   int j, k;
+
+  //uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
 
@@ -316,7 +358,7 @@ while(1){
     }
     
 
-    writeBarGraph(0x20);
+    writeBarGraph(lastEncoderValue);
     //bar graph test
     //SPDR = 0x08;
     //while (bit_is_clear(SPSR, SPIF)){}
