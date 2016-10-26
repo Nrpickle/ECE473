@@ -18,6 +18,8 @@
 //  ENCODER SETUP
 //    	PORTE bit 6
 
+//TODO: CHECK WITH STEVEN ABOUT OVERFLOW
+
 //#define F_CPU 16000000 // cpu speed in hertz 
 #define TRUE 1
 #define FALSE 0
@@ -51,8 +53,20 @@ uint8_t segment_data[5];
 //decimal to 7-segment LED display encodings, logic "0" turns on segment
 uint8_t dec_to_7seg[12];
 
+//Globals
+uint16_t counter = 0;
+//TODO: Add rest of globals
+
+
+//Function Dec
+void inline incrementCounter( void );
+void inline decrementCounter( void );
+//TODO: Move rest of function decs
+
 //TODO: Remove all of this shit
 uint8_t randoTest = 0;
+uint8_t inc2Bool = 0x00;
+uint8_t inc4Bool = 0x00;
 
 //Digit control low-level code
 void inline SET_DIGIT_ONE(void)   {PORTB |= DIG_SEL_3; PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2);}
@@ -74,10 +88,10 @@ void inline ENC_PARALLEL_ENABLE(void)  {PORTE &= ~(0x80);}
 void inline ENC_PARALLEL_DISABLE(void) {PORTE |=   0x80 ;}
 
 //Parsed commands from the encoders (parsed to one call per detent)
-void inline ENC_L_COUNTUP(void)   {}
-void inline ENC_L_COUNTDOWN(void) {}
-void inline ENC_R_COUNTUP(void)   {++randoTest;}
-void inline ENC_R_COUNTDOWN(void) {--randoTest;}
+void inline ENC_L_COUNTUP(void)   {incrementCounter();}
+void inline ENC_L_COUNTDOWN(void) {decrementCounter();}
+void inline ENC_R_COUNTUP(void)   {incrementCounter();}
+void inline ENC_R_COUNTDOWN(void) {decrementCounter();}
 
 
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
@@ -90,13 +104,12 @@ void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void setDigit( uint8_t targetDigit );
 void processButtonPress( void );
+void processCounterOutput( void );
 void inline checkButtons( void );
 void inline updateSPI( void );
 void processEncoders( void );
 
-
 //Global Variables
-uint16_t counter = 0;
 uint32_t output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 int16_t  lastEntered = 0;
 int16_t  debounceCounter = 0;
@@ -238,12 +251,36 @@ void setDigit( uint8_t targetDigit ){
 
 //This function is called when a button is pressed, and handles processing the press, as well as
 //changing tne numbers that are to be outputted.
-void processButtonPress( void ) {
-  counter += 0xFF - PINA;
+void processButtonPress( void ){
+  //counter += 0xFF - PINA;
 
-  if(counter >= 1024){
-    counter -= 1023;
+  //if(counter >= 1024){
+  //  counter -= 1023;
+  //}
+
+  uint8_t temp = 0xFF - PINA;
+
+  switch(temp){
+    case 0x01:
+      inc2Bool ^= 0x01;
+      bargraphOutput ^= (1 << 0);
+      break;
+    case 0x02:
+      inc4Bool ^= 0x01;
+      bargraphOutput ^= (1 << 1);
+      break;
+
   }
+
+}  
+ 
+void processCounterOutput( void ){
+  //We want to check for overflow/underflow here
+  if(counter < 10000 && counter > 1023) //Check for simple overflow
+    counter = counter % 1024;
+ 
+  if(counter > 10000) //Check for overflow, because variable is a uint, it will wrap around
+    counter = 1023;
 
   //We want to calculate the presses here, and not every time, as they can take some time,
   //and the user will be more tolerable of a slight sutter at a button press, but not every
@@ -337,7 +374,10 @@ void processEncoders( void ){
 
   //Check if the values have changed, if so process them
   if(lEncoder != lEncoderPrev){
-
+    if((lEncoderPrev == 0x01) && (lEncoder == 0x03))
+      ENC_L_COUNTUP();
+    if((lEncoderPrev == 0x02) && (lEncoder == 0x03))
+      ENC_L_COUNTDOWN();
   }
 
   if(rEncoder != rEncoderPrev){
@@ -348,6 +388,29 @@ void processEncoders( void ){
   }
 
   
+}
+
+void inline incrementCounter( void ){
+  if(inc2Bool & inc4Bool)
+    NOP();
+  else if (inc2Bool)
+    counter += counter + 2;
+  else if (inc4Bool)
+    counter += 4;
+  else
+    counter += 1;
+    
+}
+
+void inline decrementCounter( void ){
+  if(inc2Bool & inc4Bool)
+    NOP();
+  else if (inc2Bool)
+    counter -= 2;
+  else if (inc4Bool)
+    counter -= 4;
+  else
+    counter -= 1;
 }
 
 //***********************************************************************************
@@ -396,22 +459,13 @@ while(1){
 
       }
     }
+
+    processCounterOutput();
    
 
 
-    updateSPI();
 
-    bargraphOutput = randoTest; //lastEncoderValue;
-
-    if(lastEncoderValue != 0xFF)
-      tempBool = 0xF0;
-    //bar graph test
-    //SPDR = 0x08;
-    //while (bit_is_clear(SPSR, SPIF)){}
-
-    //PORTB |=  0x01;
-    //PORTB &= ~0x01;
-
+    //bargraphOutput = randoTest; //lastEncoderValue;
 
   }
   
