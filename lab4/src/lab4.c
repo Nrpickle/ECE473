@@ -118,6 +118,8 @@ uint8_t  unpressed = 1;
 uint8_t  lastEncoderValue = 0x13;
 uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly measured value
 uint8_t  bargraphOutput = 0;
+uint8_t  secondsCounter = 0; //When counted is 255, a second has past
+
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -125,7 +127,7 @@ void configureIO( void ){
   ENABLE_LED_CONTROL(); 
 
   //DDRA = 0xFF; //Initialize DDRA as if we want to control the LEDs
-  DDRB = 0xF0; //Upper nibble of the B register is for controlling the decoder / PWM Transistor
+  DDRB  = 0xF0; //Upper nibble of the B register is for controlling the decoder / PWM Transistor
 
   DDRB |= 0x07;  //Setup the SPI pins as outputs
 
@@ -147,9 +149,28 @@ void configureIO( void ){
 
 //Configures all timer/counters on the device
 void configureTimers( void ){
+  //Enable TCC0 to be clocked from an external osc,
+  ASSR |= (1<<AS0);
+  //Enable coutner in normal mode with 128 prescaler
+  TCCR0 = (0<<CS02) | (0<<CS01) | (1<<CS00);
+
+  //Wait for all ascynch warning bits to clear
+  while(bit_is_set(ASSR, TCN0UB));
+  while(bit_is_set(ASSR, OCR0UB));
+  while(bit_is_set(ASSR, TCR0UB));
+
+  //Enable overflow interrupts for T/C 0
+  TIMSK |= (1<<TOIE0);
+
+  //Eat a potato
+
+  //Our timer will overflow 256 times a second, so increment timer once that happens
+
+  /*
   //Timer 0 configure: Polling buttons
   TIMSK |= (1<<TOIE0); //Enable overflow interrupts
   TCCR0 |= (1<<CS02) | (1<<CS01) | (0<<CS00);  //Normal mode, prescale 
+  */
 
   //OCR0 Output Compare Register
 
@@ -158,12 +179,20 @@ void configureTimers( void ){
 //Timer 0 overflow vector
 //Polls the buttons / interfaces with SPI
 ISR(TIMER0_OVF_vect){
+  if(++secondsCounter == 128){
+    //++counter;
+    incrementCounter();
+    secondsCounter = 0;
+  }
+  else if (secondsCounter % 8 == 0){
+    checkButtons();
 
-  checkButtons();
-
-  updateSPI();
-  
-  processEncoders();
+    updateSPI();
+    
+    processEncoders();
+  }
+//  incrementCounter();
+  //while(1); 
 }
 
 //Setup SPI on the interface
@@ -271,12 +300,7 @@ void setDigit( uint8_t targetDigit ){
 //This function is called when a button is pressed, and handles processing the press, as well as
 //changing tne numbers that are to be outputted.
 void processButtonPress( void ){
-  //counter += 0xFF - PINA;
-
-  //if(counter >= 1024){
-  //  counter -= 1023;
-  //}
-
+  
   uint8_t temp = 0xFF - PINA;
 
   switch(temp){
@@ -458,6 +482,7 @@ while(1){
   //uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
+
 
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
