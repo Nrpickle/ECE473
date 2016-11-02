@@ -49,6 +49,9 @@
 #define DIG_SEL_3 0x40
 #define PWM_CTRL 0x80
 
+//Segment definitions
+#define SEG_OFF 0xFF 
+
 //holds data to be sent to the segments. logic zero turns segment on
 uint8_t segment_data[5];
 
@@ -83,6 +86,7 @@ uint8_t inc2Bool = 0x00;
 uint8_t inc4Bool = 0x00;
 
 //Digit control low-level code
+void inline SET_DIGIT_DOT(void)   {PORTB |= DIG_SEL_2; PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_3);} //Untested, TODO: test!
 void inline SET_DIGIT_ONE(void)   {PORTB |= DIG_SEL_3; PORTB = PORTB & ~(DIG_SEL_1 | DIG_SEL_2);}
 void inline SET_DIGIT_TWO(void)   {PORTB |= DIG_SEL_1 | DIG_SEL_2; PORTB = PORTB & ~(DIG_SEL_3);}
 void inline SET_DIGIT_THREE(void) {PORTB |= DIG_SEL_1; PORTB = PORTB & ~(DIG_SEL_2 | DIG_SEL_3);}
@@ -120,6 +124,10 @@ uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 
+//time management
+uint8_t  seconds = 0;
+uint8_t  minutes = 0;
+uint8_t  hours   = 0;
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -167,11 +175,21 @@ void configureTimers( void ){
 
 //Timer 0 overflow vector
 //Polls the buttons / interfaces with SPI
-ISR(TIMER0_OVF_vect){
-  if(++secondsCounter == 128){
+//Counts seconds
+ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
+  if(++secondsCounter == 16){//128){
     //++counter;
     incrementCounter();
     secondsCounter = 0;
+
+    seconds += 1;
+    if(seconds == 60){
+      seconds = 0;
+      minutes += 1;
+      if(minutes == 60)
+        minutes = 0;
+        hours += 1;
+    }
   }
   else if (secondsCounter % 8 == 0){
     checkButtons();
@@ -180,20 +198,13 @@ ISR(TIMER0_OVF_vect){
     
     processEncoders();
   }
-//  incrementCounter();
-  //while(1); 
 }
 
 //Setup SPI on the interface
 void configureSPI( void ){
-
   //Configure SPI
   //Master mode, clk low on idle, leading edge sample
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << CPOL) | (0 << CPHA);   
-
-  //Chose double speed operation
-  //SPSR = (1 << SPI2X);
-
 
 }
 
@@ -235,6 +246,9 @@ void inline setSegment( uint16_t targetOutput ){
        break; 
      case 11: //B
        break;
+     case SEG_OFF:
+       clearSegment();
+       break;
   }
 }
 
@@ -254,25 +268,25 @@ void setDigit( uint8_t targetDigit ){
     case 1:
       SET_DIGIT_ONE();
       _delay_us(100);
-      if(counter < 1000)
-        clearSegment();
-      else
+      //if(counter < 1000)
+      //  clearSegment();
+      //else
         setSegment(output[1]);
       break;
     case 2:
       SET_DIGIT_TWO();
       _delay_us(100);
-      if(counter < 100)
-        clearSegment();
-      else
+      //if(counter < 100)
+      //  clearSegment();
+      //else
         setSegment(output[2]);
       break;
     case 3:
       SET_DIGIT_THREE();
       _delay_us(100);
-      if(counter < 10)
-        clearSegment();
-      else
+      //if(counter < 10)
+      //  clearSegment();
+      //else
         setSegment(output[3]);
       break;
     case 4:
@@ -281,9 +295,6 @@ void setDigit( uint8_t targetDigit ){
       setSegment(output[4]);
       break;
   }
-
-  //clearSegment();
-
 }
 
 //This function is called when a button is pressed, and handles processing the press, as well as
@@ -325,6 +336,19 @@ void processCounterOutput( void ){
   tempCounter /= 10;
   output[3] = tempCounter % 10;
   tempCounter /= 10;
+  output[2] = tempCounter % 10;
+  tempCounter /= 10;
+  output[1] = tempCounter % 10;
+
+  //Calculate output due for minutes
+  //Note: Output 1 is leftmost output
+  tempCounter = seconds;
+  output[4] = tempCounter % 10;
+  tempCounter /= 10;
+  output[3] = tempCounter % 10;
+
+  //Calculate the output due for hours
+  tempCounter = minutes;
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
