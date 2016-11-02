@@ -163,17 +163,6 @@ void configureTimers( void ){
   TIMSK |= (1<<TOIE0);
 
   //Eat a potato
-
-  //Our timer will overflow 256 times a second, so increment timer once that happens
-
-  /*
-  //Timer 0 configure: Polling buttons
-  TIMSK |= (1<<TOIE0); //Enable overflow interrupts
-  TCCR0 |= (1<<CS02) | (1<<CS01) | (0<<CS00);  //Normal mode, prescale 
-  */
-
-  //OCR0 Output Compare Register
-
 }
 
 //Timer 0 overflow vector
