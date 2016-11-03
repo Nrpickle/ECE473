@@ -469,6 +469,7 @@ void inline updateSPI( void ){
   ENC_CLK_ENABLE();        //Allow us to read in serial data
   ENC_PARALLEL_DISABLE();  //Allow us to read in serial data
 
+  //NOPs required for electrical propogation
   NOP();
   NOP();
 
@@ -566,21 +567,19 @@ void inline ENC_R_COUNTUP(void){
   }
 }
 void inline ENC_R_COUNTDOWN(void){
-  switch(settings){
-    case SET_MIN:
-      if(minutes == 0)
-        minutes = 59;
-      else
-        minutes -= 1;
-      seconds = 0;
-      break;
-    case SET_HR:
-      if(hours == 0)
-        hours = 23;
-      else
-        hours -= 1;
-      seconds = 0;
-      break;
+  if(settings & SET_MIN){
+    if(minutes == 0)
+      minutes = 59;
+    else
+      minutes -= 1;
+    seconds = 0;
+  }
+  if(settings & SET_HR){
+    if(hours == 0)
+      hours = 23;
+    else
+      hours -= 1;
+    seconds = 0;
   }
 }
 
