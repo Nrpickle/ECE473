@@ -359,6 +359,10 @@ void processButtonPress( void ){
       break;
     case 0x20: //Set military time button
       settings ^= TIME24;
+      if(settings & TIME24)
+        upperDot = TRUE;
+      else
+        upperDot = FALSE;
       break;
     case 0x40: //Toggle Set minutes
       settings ^= SET_MIN;
@@ -396,11 +400,16 @@ void processCounterOutput( void ){
   output[3] = tempCounter % 10;
 
   //Calculate the output due for hours
-  tempCounter = hours;
+  //if(settings & TIME24)
+    tempCounter = hours;
+  //else
+  //  tempCounter = hours % 12;
+  
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
 
+  //Blink the colon for seconds
   if(seconds % 2) //If seconds are odd
     colon = FALSE;
   else
@@ -480,11 +489,8 @@ void processEncoders( void ){
   rEncoderPrev = rEncoder;
 
   //Save previous values
-
   lEncoder =  (lastEncoderValue & 0x03);
   rEncoder = ((lastEncoderValue & 0x0C) >> 2);
-
-  //bargraphOutput = rEncoder;
 
   //Check if the values have changed, if so process them
   if(lEncoder != lEncoderPrev){
@@ -557,12 +563,14 @@ void inline ENC_R_COUNTDOWN(void){
       else
         minutes -= 1;
       seconds = 0;
+      break;
     case SET_HR:
       if(hours == 0)
         hours = 23;
       else
         hours -= 1;
       seconds = 0;
+      break;
   }
 }
 
