@@ -20,8 +20,6 @@
 //  ENC_CLK_INH PORTE bit 6
 //  ENC_SH/LD   PORTE bit 7
 
-//TODO: CHECK WITH STEVEN ABOUT OVERFLOW
-
 //#define F_CPU 16000000 // cpu speed in hertz 
 #define TRUE 1
 #define FALSE 0
@@ -105,11 +103,12 @@ void inline ENC_CLK_DISABLE(void) {PORTE |=   0x40 ;}
 void inline ENC_PARALLEL_ENABLE(void)  {PORTE &= ~(0x80);}
 void inline ENC_PARALLEL_DISABLE(void) {PORTE |=   0x80 ;}
 
+
 //Parsed commands from the encoders (parsed to one call per detent)
-void inline ENC_L_COUNTUP(void)   {incrementCounter();}
-void inline ENC_L_COUNTDOWN(void) {decrementCounter();}
-void inline ENC_R_COUNTUP(void)   {incrementCounter();}
-void inline ENC_R_COUNTDOWN(void) {decrementCounter();}
+void inline ENC_L_COUNTUP(void)  ;
+void inline ENC_L_COUNTDOWN(void);
+void inline ENC_R_COUNTUP(void)  ;
+void inline ENC_R_COUNTDOWN(void);
 
 //NOP delay
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
@@ -123,11 +122,24 @@ uint8_t  lastEncoderValue = 0x13;
 uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly measured value
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
+uint8_t  quickToggle = 0;
 
 //time management
 uint8_t  seconds = 0;
 uint8_t  minutes = 0;
 uint8_t  hours   = 0;
+
+//uint8_t  time24  = 0; //If 1, then display military time, otherwise standard time
+
+//Digit points
+uint8_t  dots[5] = {0,0,0,0,0};
+uint8_t  upperDot = 0;
+uint8_t  colon = 0;
+
+//Editing settings
+uint16_t settings = 0;
+
+enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04};
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -177,7 +189,7 @@ void configureTimers( void ){
 //Polls the buttons / interfaces with SPI
 //Counts seconds
 ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
-  if(++secondsCounter == 16){//128){
+  if(++secondsCounter == 32){//128){  //Make faster using 16
     //++counter;
     incrementCounter();
     secondsCounter = 0;
@@ -186,17 +198,21 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
     if(seconds == 60){
       seconds = 0;
       minutes += 1;
-      if(minutes == 60)
+      if(minutes == 60){
         minutes = 0;
         hours += 1;
+      }
     }
   }
-  else if (secondsCounter % 8 == 0){
+  if (secondsCounter % 1 == 0){
     checkButtons();
 
     updateSPI();
     
     processEncoders();
+  }
+  if (secondsCounter % 32 == 0){  //Fast cycle
+    quickToggle ^= 1;
   }
 }
 
@@ -260,39 +276,63 @@ void inline clearSegment( void ){
 //Sets the decoder to choose the appropriate transistor for the appropriate digit. 
 //It also sets the appropriate segment outputs.
 //NOTE: There is an inherient 100uS delay with any call of this function
-void setDigit( uint8_t targetDigit ){ 
+void setDigit( uint8_t targetDigit ){
+  clearSegment();
   switch(targetDigit){
 
-    clearSegment();
-
+    case 0: //colon control
+      SET_DIGIT_DOT();  //Digit control
+      _delay_us(100);
+      
+      if(colon)
+	PORTA = PORTA & ~(SEG_A | SEG_B);
+      else
+        PORTA |= SEG_A | SEG_B; 
+      
+      if(upperDot)
+        PORTA = PORTA & ~(SEG_C);
+      else
+        PORTA |= SEG_C;
+      break;
     case 1:
       SET_DIGIT_ONE();
       _delay_us(100);
-      //if(counter < 1000)
-      //  clearSegment();
-      //else
+      if(dots[1])
+        PORTA = PORTA & ~(SEG_DP);
+      if((settings & SET_HR) && quickToggle)
+        clearSegment();
+      else
         setSegment(output[1]);
       break;
     case 2:
       SET_DIGIT_TWO();
       _delay_us(100);
-      //if(counter < 100)
-      //  clearSegment();
-      //else
+      if(dots[2])
+        PORTA = PORTA & ~(SEG_DP);
+      if((settings & SET_HR) && quickToggle)
+        clearSegment();
+      else
         setSegment(output[2]);
       break;
     case 3:
       SET_DIGIT_THREE();
       _delay_us(100);
-      //if(counter < 10)
-      //  clearSegment();
-      //else
+      if(dots[3])
+        PORTA = PORTA & ~(SEG_DP);
+      if((settings & SET_MIN) && quickToggle)
+        clearSegment();
+      else
         setSegment(output[3]);
       break;
     case 4:
       SET_DIGIT_FOUR();
       _delay_us(100);
-      setSegment(output[4]);
+      if(dots[4])
+        PORTA = PORTA & ~(SEG_DP);
+      if((settings & SET_MIN) && quickToggle)
+        clearSegment();
+      else
+        setSegment(output[4]);
       break;
   }
 }
@@ -312,7 +352,22 @@ void processButtonPress( void ){
       inc4Bool ^= 0x01;
       bargraphOutput ^= (1 << 1);
       break;
-
+    case 0x10: //Test button
+      hours = 11;
+      minutes = 44;
+      seconds = 55;
+      break;
+    case 0x20: //Set military time button
+      settings ^= TIME24;
+      break;
+    case 0x40: //Toggle Set minutes
+      settings ^= SET_MIN;
+      settings &= ~(SET_HR);
+      break;
+    case 0x80:
+      settings ^= SET_HR;
+      settings &= ~(SET_MIN);
+      break;
   }
 
 }  
@@ -332,26 +387,25 @@ void processCounterOutput( void ){
   //execution cycle. (In theory. In practice, this math will be unnoticable). 
   uint16_t tempCounter = counter;
   //calculate new output values
-  output[4] = tempCounter % 10;
-  tempCounter /= 10;
-  output[3] = tempCounter % 10;
-  tempCounter /= 10;
-  output[2] = tempCounter % 10;
-  tempCounter /= 10;
-  output[1] = tempCounter % 10;
 
   //Calculate output due for minutes
   //Note: Output 1 is leftmost output
-  tempCounter = seconds;
+  tempCounter = minutes;
   output[4] = tempCounter % 10;
   tempCounter /= 10;
   output[3] = tempCounter % 10;
 
   //Calculate the output due for hours
-  tempCounter = minutes;
+  tempCounter = hours;
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
+
+  if(seconds % 2) //If seconds are odd
+    colon = FALSE;
+  else
+    colon = TRUE;
+  
 
 }
 
@@ -476,6 +530,42 @@ void inline decrementCounter( void ){
 }
 
 
+//Parsed commands from the encoders (parsed to one call per detent)
+void inline ENC_L_COUNTUP(void){
+
+}
+void inline ENC_L_COUNTDOWN(void){
+
+}
+void inline ENC_R_COUNTUP(void){
+  switch(settings){
+    case SET_MIN:
+      minutes = (minutes + 1) % 60;
+      seconds = 0;
+      break;
+    case SET_HR:
+      hours = (hours + 1) % 24;
+      seconds = 0;
+      break;
+  }
+}
+void inline ENC_R_COUNTDOWN(void){
+  switch(settings){
+    case SET_MIN:
+      if(minutes == 0)
+        minutes = 59;
+      else
+        minutes -= 1;
+      seconds = 0;
+    case SET_HR:
+      if(hours == 0)
+        hours = 23;
+      else
+        hours -= 1;
+      seconds = 0;
+  }
+}
+
 //Main function call
 int main()
 {
@@ -499,7 +589,7 @@ while(1){
 
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
-      for(j = 1; j < 5; ++j){
+      for(j = 0; j < 5; ++j){
         //clearSegment();
         _delay_us(50);
 	
@@ -511,7 +601,7 @@ while(1){
 
       }
     }
-	
+
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
 
   }
