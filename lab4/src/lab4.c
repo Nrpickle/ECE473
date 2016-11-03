@@ -298,42 +298,42 @@ void setDigit( uint8_t targetDigit ){
     case 1:
       SET_DIGIT_ONE();
       _delay_us(100);
-      if(dot[1])
-        PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
       else
         setSegment(output[1]);
+      if(dot[1])
+        PORTA = PORTA & ~(SEG_DP);
       break;
     case 2:
       SET_DIGIT_TWO();
       _delay_us(100);
-      if(dot[2])
-        PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
       else
         setSegment(output[2]);
+      if(dot[2])
+        PORTA = PORTA & ~(SEG_DP);
       break;
     case 3:
       SET_DIGIT_THREE();
       _delay_us(100);
-      if(dot[3])
-        PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
         setSegment(output[3]);
+      if(dot[3])
+        PORTA = PORTA & ~(SEG_DP);
       break;
     case 4:
       SET_DIGIT_FOUR();
       _delay_us(100);
-      if(dot[4])
-        PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
         setSegment(output[4]);
+      if(dot[4])
+        PORTA = PORTA & ~(SEG_DP);
       break;
   }
 }
@@ -409,12 +409,13 @@ void processCounterOutput( void ){
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
-/*
-  if(hours > 11)
+
+  //We want to output a dot to indicate "PM" if the time is over 11 and we're not in 24 hour mode
+  if((hours > 11) && !(settings & TIME24))
     dot[3] = 1;
   else
     dot[3] = 0;
-*/
+
   //Blink the colon for seconds
   if(seconds % 2) //If seconds are odd
     colon = FALSE;
@@ -590,8 +591,6 @@ while(1){
   lcd_init();
   clear_display();
   sei();
-
-  dot[3] = 1;
 
   uint8_t temp_counter = 1;
   uint8_t tempBool = 0x01;
