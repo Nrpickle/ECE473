@@ -190,7 +190,7 @@ void configureTimers( void ){
 //Polls the buttons / interfaces with SPI
 //Counts seconds
 ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
-  if(++secondsCounter == 32){//128){  //Make faster using 16
+  if(++secondsCounter == 128){//128){  //Make faster using 16
     //++counter;
     incrementCounter();
     secondsCounter = 0;
