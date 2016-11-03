@@ -405,10 +405,13 @@ void processCounterOutput( void ){
   output[3] = tempCounter % 10;
 
   //Calculate the output due for hours
-  if(settings & TIME24)
+  if(settings & TIME24)  //Check if we want to output military time
     tempCounter = hours;
-  else
+  else { //Otherwise, output "civilian time"
     tempCounter = hours % 12;
+    if(tempCounter == 0)
+      tempCounter = 12;
+  }
   
   output[2] = tempCounter % 10;
   tempCounter /= 10;

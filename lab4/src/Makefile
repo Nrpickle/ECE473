@@ -1,6 +1,6 @@
 SHELL               = /bin/bash
 PRG                 = lab4
-OBJS                = lab4.o  
+OBJS                = lab4.o hd44780.o 
 SRCS                = lab4.c 
 MCU_TARGET          = atmega128
 F_CPU               = 16000000UL
