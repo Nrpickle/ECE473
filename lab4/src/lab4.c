@@ -27,6 +27,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stddef.h>
+#include "hd44780.h"
 
 //Program controls
 //#define LEADING_0  //Whether or not you want leading zeros
@@ -132,14 +133,14 @@ uint8_t  hours   = 0;
 //uint8_t  time24  = 0; //If 1, then display military time, otherwise standard time
 
 //Digit points
-uint8_t  dots[5] = {0,0,0,0,0};
+uint8_t  dot[5] = {0,0,0,0,0};
 uint8_t  upperDot = 0;
 uint8_t  colon = 0;
 
 //Editing settings
 uint16_t settings = 0;
 
-enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04};
+enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x10};
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -297,7 +298,7 @@ void setDigit( uint8_t targetDigit ){
     case 1:
       SET_DIGIT_ONE();
       _delay_us(100);
-      if(dots[1])
+      if(dot[1])
         PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
@@ -307,7 +308,7 @@ void setDigit( uint8_t targetDigit ){
     case 2:
       SET_DIGIT_TWO();
       _delay_us(100);
-      if(dots[2])
+      if(dot[2])
         PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
@@ -317,7 +318,7 @@ void setDigit( uint8_t targetDigit ){
     case 3:
       SET_DIGIT_THREE();
       _delay_us(100);
-      if(dots[3])
+      if(dot[3])
         PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
@@ -327,7 +328,7 @@ void setDigit( uint8_t targetDigit ){
     case 4:
       SET_DIGIT_FOUR();
       _delay_us(100);
-      if(dots[4])
+      if(dot[4])
         PORTA = PORTA & ~(SEG_DP);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
@@ -400,15 +401,20 @@ void processCounterOutput( void ){
   output[3] = tempCounter % 10;
 
   //Calculate the output due for hours
-  //if(settings & TIME24)
+  if(settings & TIME24)
     tempCounter = hours;
-  //else
-  //  tempCounter = hours % 12;
+  else
+    tempCounter = hours % 12;
   
   output[2] = tempCounter % 10;
   tempCounter /= 10;
   output[1] = tempCounter % 10;
-
+/*
+  if(hours > 11)
+    dot[3] = 1;
+  else
+    dot[3] = 0;
+*/
   //Blink the colon for seconds
   if(seconds % 2) //If seconds are odd
     colon = FALSE;
@@ -544,15 +550,14 @@ void inline ENC_L_COUNTDOWN(void){
 
 }
 void inline ENC_R_COUNTUP(void){
-  switch(settings){
-    case SET_MIN:
+  
+  if(settings & SET_MIN){
       minutes = (minutes + 1) % 60;
       seconds = 0;
-      break;
-    case SET_HR:
-      hours = (hours + 1) % 24;
-      seconds = 0;
-      break;
+  }
+  if(settings & SET_HR){
+    hours = (hours + 1) % 24;
+    seconds = 0;
   }
 }
 void inline ENC_R_COUNTDOWN(void){
@@ -582,15 +587,20 @@ while(1){
   configureIO();
   configureTimers();
   configureSPI();
+  lcd_init();
+  clear_display();
   sei();
 
+  dot[3] = 1;
 
   uint8_t temp_counter = 1;
   uint8_t tempBool = 0x01;
 
   int j, k;
 
-  //uint8_t counter = 0;
+
+  string2lcd(" Eat a potato! :D");
+//uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
 
