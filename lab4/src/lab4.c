@@ -302,6 +302,10 @@ void setDigit( uint8_t targetDigit ){
         clearSegment();
       else
         setSegment(output[1]);
+      //Check if we want to remove a leading zero
+      if((hours > 0 && hours < 10) || (hours > 12 && hours < 22) && !(settings & TIME24)){ //Then we want to remove 0
+        clearSegment();
+      }
       if(dot[1])
         PORTA = PORTA & ~(SEG_DP);
       break;
