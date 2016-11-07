@@ -419,9 +419,9 @@ void processCounterOutput( void ){
 
   //We want to output a dot to indicate "PM" if the time is over 11 and we're not in 24 hour mode
   if((hours > 11) && !(settings & TIME24))
-    dot[3] = 1;
+    dot[2] = 1;
   else
-    dot[3] = 0;
+    dot[2] = 0;
 
   //Blink the colon for seconds
   if(seconds % 2) //If seconds are odd
