@@ -30,7 +30,7 @@ DItemRevisionGUID=
 ReportSuppressedErrorsInMessages=0
 FSMCodingStyle=eFMSDropDownList_OneProcess
 FSMEncodingStyle=eFMSDropDownList_OneHot
-OutputPath=Project Outputs for alarmClock
+OutputPath=
 LogFolderPath=
 ManagedProjectGUID=
 
@@ -203,7 +203,7 @@ SCH_HasExpandLogicalToPhysicalSheets=-1
 SaveSettingsToOutJob=-1
 
 [Generic_EDE]
-OutputDir=Project Outputs for alarmClock
+OutputDir=
 
 [OutputGroup1]
 Name=Netlist Outputs
