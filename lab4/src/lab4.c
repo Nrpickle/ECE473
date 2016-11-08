@@ -203,7 +203,7 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
   //Begin ADC reading
 
   //Poke ADC and start conversion
-  ADCSRA |= (1<< ADSC);
+//  ADCSRA |= (1<< ADSC);
 
   if(++secondsCounter == 128){//128){  //Make faster using 16
     incrementCounter();
@@ -227,17 +227,27 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
     processEncoders();
   }
   if (secondsCounter % 32 == 0){  //Fast cycle
+    //Poke ADC and start conversion
+//    ADCSRA |= (1 << ADSC);
+
     quickToggle ^= 1;
+
+    //Wait for ADC read to be complete
+//    while(bit_is_clear(ADCSRA, ADIF));
+    //When it's done, clear the interrupt flag by writing a one
+//    ADCSRA |= (1<<ADIF);
+    //Read the result (16 bits)
+//    lastADCread = ADC;
   }
 
   //Read ADC value
 
   //Wait for ADC read to be complete
-  while(bit_is_clear(ADCSRA, ADIF));
+//  while(bit_is_clear(ADCSRA, ADIF));
   //When it's done, clear the interrupt flag by writing a one
-  ADCSRA |= (1<<ADIF);
+//  ADCSRA |= (1<<ADIF);
   //Read the result (16 bits)
-  lastADCread = ADC;
+//  lastADCread = ADC;
 }
 
 //Setup SPI on the interface
@@ -674,6 +684,8 @@ while(1){
 
     temp_adcResult = ADC;
 */
+
+/*
     itoa(lastADCread, lcd_str_l, 10);
 
     clear_display();
@@ -683,7 +695,7 @@ while(1){
     string2lcd(lcd_str_l);
 
     cursor_home();
-   
+*/   
 
   }
   
