@@ -179,7 +179,7 @@ void configureIO( void ){
 void configureTimers( void ){
   //Enable TCC0 to be clocked from an external osc,
   ASSR |= (1<<AS0);
-  //Enable coutner in normal mode with 128 prescaler
+  //Enable coutner in normal mode with no prescaler
   TCCR0 = (0<<CS02) | (0<<CS01) | (1<<CS00);
 
   //Wait for all ascynch warning bits to clear
@@ -196,9 +196,11 @@ void configureTimers( void ){
 //Timer 0 overflow vector
 //Polls the buttons / interfaces with SPI
 //Counts seconds
+//Updates values
+//This ISR is invoked every 255 clock cycles of the 32.768kHz oscillator (~128Hz)
 ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
+
   if(++secondsCounter == 128){//128){  //Make faster using 16
-    //++counter;
     incrementCounter();
     secondsCounter = 0;
 
