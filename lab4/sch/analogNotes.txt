@@ -1,0 +1,34 @@
+473 Op Amp Notes
+
+PWM to volume control
+
+Use TCNT3
+
+Roll off for RC 100x less than PWM fundamental frequency
+R = 10K to 1M
+
+--R--*--
+     -
+     C
+     -
+     
+
+Alarm output
+TCNT1
+
+Radio outputs at 75mV, compared to alarm output of 5v
+
+Need to equalize and combine using Summer OpAmp
+http://mechatronics.mech.northwestern.edu/design_ref/electrical_design/Summer.gif
+Rf should be ~10k, R1 will be bigger, R2 will be smaller
+
+P = V^2 / R
+We desire 100mW
+
+Use DC coupling cap for alarm output from uC
+
+Positive input to OpAmp goes to 2v5 with .1uF (ish) cap and 100k input resistor (look at rolloff)
+
+.1uF cap on power rail for OpAmp
+
+Audio systems typically use a "single point ground" 
