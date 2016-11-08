@@ -125,6 +125,7 @@ uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 uint8_t  quickToggle = 0;
+uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value
 
 //time management
 uint8_t  seconds = 0;
@@ -199,6 +200,10 @@ void configureTimers( void ){
 //Updates values
 //This ISR is invoked every 255 clock cycles of the 32.768kHz oscillator (~128Hz)
 ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
+  //Begin ADC reading
+
+  //Poke ADC and start conversion
+  ADCSRA |= (1<< ADSC);
 
   if(++secondsCounter == 128){//128){  //Make faster using 16
     incrementCounter();
@@ -224,6 +229,15 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
   if (secondsCounter % 32 == 0){  //Fast cycle
     quickToggle ^= 1;
   }
+
+  //Read ADC value
+
+  //Wait for ADC read to be complete
+  while(bit_is_clear(ADCSRA, ADIF));
+  //When it's done, clear the interrupt flag by writing a one
+  ADCSRA |= (1<<ADIF);
+  //Read the result (16 bits)
+  lastADCread = ADC;
 }
 
 //Setup SPI on the interface
@@ -650,7 +664,7 @@ while(1){
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
 
-
+/*
     //ADC test code
     ADCSRA |= (1<<ADSC);
 
@@ -659,8 +673,8 @@ while(1){
     ADCSRA |= (1<<ADIF);
 
     temp_adcResult = ADC;
-
-    itoa(temp_adcResult, lcd_str_l, 10);
+*/
+    itoa(lastADCread, lcd_str_l, 10);
 
     clear_display();
     NOP();
@@ -670,7 +684,6 @@ while(1){
 
     cursor_home();
    
-    _delay_us(500);
 
   }
   
