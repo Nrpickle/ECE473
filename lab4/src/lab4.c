@@ -69,6 +69,7 @@ void setDigit( uint8_t targetDigit );
 void configureIO( void );
 void configureTimers( void );
 void configureSPI( void );
+void configureADC( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void processButtonPress( void );
@@ -152,6 +153,12 @@ void configureIO( void ){
 
   DDRB |= 0x07;  //Setup the SPI pins as outputs
 
+  //Setup ADC input
+  DDRF  &= ~0x01;  //Setup pin 0 as an input (just in case)
+  PORTF &= ~0x01;  //Pullups must be off     (just in case)
+
+
+
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
   //(it defaults to low)
@@ -222,6 +229,17 @@ void configureSPI( void ){
   //Configure SPI
   //Master mode, clk low on idle, leading edge sample
   SPCR = (1 << SPE) | (1 << MSTR) | (0 << CPOL) | (0 << CPHA);   
+
+}
+
+//Configures the ADC
+void configureADC( void ){
+  //Configure the MUX for single-ended input on PORTF pin 0, right adjusted, 10 bits
+  ADMUX  = (1<<REFS0);
+
+  //Enable the ADC, don't start yet, single shot mode
+  //division factor is 128 (125khz)
+  ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2);
 
 }
 
@@ -594,6 +612,7 @@ while(1){
   configureIO();
   configureTimers();
   configureSPI();
+  configureADC();
   lcd_init();
   clear_display();
   sei();
@@ -603,6 +622,8 @@ while(1){
 
   int j, k;
 
+  uint16_t temp_adcResult = 0;
+  char lcd_str_l[16];
 
   string2lcd(" Eat a potato! :D");
 //uint8_t counter = 0;
@@ -626,6 +647,28 @@ while(1){
     }
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
+
+
+    //ADC test code
+    ADCSRA |= (1<<ADSC);
+
+    while(bit_is_clear(ADCSRA, ADIF));
+
+    ADCSRA |= (1<<ADIF);
+
+    temp_adcResult = ADC;
+
+    itoa(temp_adcResult, lcd_str_l, 10);
+
+    clear_display();
+    NOP();
+    NOP();
+    string2lcd(" ");
+    string2lcd(lcd_str_l);
+
+    cursor_home();
+   
+    _delay_us(500);
 
   }
   
