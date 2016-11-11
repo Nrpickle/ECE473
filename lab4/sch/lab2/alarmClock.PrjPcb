@@ -107,6 +107,23 @@ GenerateClassCluster=0
 DocumentUniqueId=JKUHAJLR
 
 [Document5]
+DocumentPath=audioAmp.SchDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=JKUHAJLR
+
+[Document6]
 DocumentPath=lab2.SchLib
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -123,7 +140,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=SFOJXQTB
 
-[Document6]
+[Document7]
 DocumentPath=lab2.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
@@ -140,7 +157,7 @@ DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=
 
-[Document7]
+[Document8]
 DocumentPath=alarmClock.OutJob
 AnnotationEnabled=1
 AnnotateStartValue=1
