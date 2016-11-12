@@ -239,9 +239,9 @@ void configureTimers( void ){
 
   ////Volume control (TCNT3)
   //9bit Fast PWM Mode, non-inverting output on OC3A
-  //8 prescaler
+  //8 prescaler, frequency is 3.906KHz
   TCCR3A |= (1<<COM3A1) | (1<<WGM31);
-  TCCR3B |= (1<<WGM32) | (CS31);
+  TCCR3B |= (1<<WGM32) | (1<<CS31);
   //No forced compare
   TCCR3C |= 0x00;
 
