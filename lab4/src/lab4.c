@@ -236,7 +236,7 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
       if(minutes == 60){
         minutes = 0;
         hours += 1;
-	if(hours == 24)
+	if(hours >= 24)
 	  hours = 0;
       }
     }
