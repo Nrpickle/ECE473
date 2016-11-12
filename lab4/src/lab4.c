@@ -62,6 +62,9 @@ dimming PWM logic
 #define DIG_SEL_3 0x40
 #define PWM_CTRL 0x80
 
+//PORTD Definitions
+#define AUDIO_OUT 0x10
+
 //Segment definitions
 #define SEG_OFF 0xFF 
 
@@ -153,6 +156,11 @@ uint8_t  dot[5] = {0,0,0,0,0};
 uint8_t  upperDot = 0;
 uint8_t  colon = 0;
 
+//Brightness management
+
+uint8_t  lux[10] = { 0x01, 0x20, 0x70, 0xA0, 0xC0, 0xD0, 0xD8, 0xDF, 0xE0, 0xEF };
+uint8_t  brightnessControl = 0;
+
 //Editing settings
 uint16_t settings = 0;
 
@@ -172,7 +180,11 @@ void configureIO( void ){
   DDRF  &= ~0x01;  //Setup pin 0 as an input (just in case)
   PORTF &= ~0x01;  //Pullups must be off     (just in case)
 
+  //Audio output pin
+  DDRD |= AUDIO_OUT;    //Pin 4 as an output
 
+  //Volume control pin
+  DDRE |= 0x08;
 
   //For this lab, we are just driving the PWM_CTRL line low always
   //PORTB |= PWM_CTRL;  
@@ -192,6 +204,7 @@ void configureIO( void ){
 
 //Configures all timer/counters on the device
 void configureTimers( void ){
+  ////Polling loop
   //Enable TCC0 to be clocked from an external osc,
   ASSR |= (1<<AS0);
   //Enable coutner in normal mode with no prescaler
@@ -205,11 +218,36 @@ void configureTimers( void ){
   //Enable overflow interrupts for T/C 0
   TIMSK |= (1<<TOIE0);
 
-  //Sound Generation (TCNT1)
+  ////Sound Generation (TCNT1)  (currently desire between 200 and 600 and 1500 Hz
+  //CTC mode
+  TCCR1A |= 0x00;
+  //CTC mode, no prescaler
+  TCCR1B |= (1<<WGM12) | (1<<CS10);
+  //No forced compare
+  TCCR1C |= 0x00;
+  //Initial compare value
+  OCR1A   = 20000; //About 400Hz?
+  //Enable interrupt
+  TIMSK  |= (1<<OCIE1A);
 
+  ////LED Dimming Control (TCNT2)
+  //Enable fast PWM, non-inverting output mode
+  //64 prescaler (goal is 967Hz)
+  TCCR2 = (1<<WGM21) | (1<<WGM20) | (1<<COM21) | (1<<CS21) | (1<<CS20);
+  //Default PWM value of half brightness
+  OCR2 = 0xFF / 7;
 
-  //Volume control (TCNT3)
-  
+  ////Volume control (TCNT3)
+  //9bit Fast PWM Mode, non-inverting output on OC3A
+  //8 prescaler
+  TCCR3A |= (1<<COM3A1) | (1<<WGM31);
+  TCCR3B |= (1<<WGM32) | (CS31);
+  //No forced compare
+  TCCR3C |= 0x00;
+
+  //Initialize with a 50% duty cycle
+  OCR3A = 512/2;
+  OCR3A = 500;
 
   //Eat a potato
 }
@@ -219,7 +257,7 @@ void configureTimers( void ){
 //Counts seconds
 //Updates values
 //This ISR is invoked every 255 clock cycles of the 32.768kHz oscillator (~128Hz)
-ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
+ISR(TIMER0_OVF_vect){
   //Begin ADC reading
 
   //Poke ADC and start conversion
@@ -228,6 +266,8 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
   if(++secondsCounter == 128){//128){  //Make faster using 16
     incrementCounter();
     secondsCounter = 0;
+
+    //OCR2 += 0x08;
 
     seconds += 1;
     if(seconds == 60){
@@ -249,6 +289,11 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
     processEncoders();
   }
   if (secondsCounter % 32 == 0){  //Fast cycle
+        //OCR2 += lux[brightnessControl];
+        //brightnessControl = (++brightnessControl) % 10;
+
+  //PORTD ^= AUDIO_OUT; 
+
     //Poke ADC and start conversion
 //    ADCSRA |= (1 << ADSC);
 
@@ -270,6 +315,13 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
 //  ADCSRA |= (1<<ADIF);
   //Read the result (16 bits)
 //  lastADCread = ADC;
+}
+
+
+//Audio generation interrupt
+ISR(TIMER1_COMPA_vect){
+   //Toggle audio output bit
+   PORTD ^= AUDIO_OUT; 
 }
 
 //Setup SPI on the interface
