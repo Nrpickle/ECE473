@@ -247,7 +247,7 @@ void configureTimers( void ){
 
   //Initialize with a 50% duty cycle
   OCR3A = 512/2;
-  OCR3A = 500;
+  OCR3A = 200;
 
   //Eat a potato
 }
