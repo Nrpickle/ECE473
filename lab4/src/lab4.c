@@ -20,6 +20,20 @@
 //  ENC_CLK_INH PORTE bit 6
 //  ENC_SH/LD   PORTE bit 7
 
+
+//TODO STUFF
+/*
+
+Enable audio PWM
+enable dimming PWM
+dimming PWM logic
+
+
+
+*/
+
+
+
 //#define F_CPU 16000000 // cpu speed in hertz 
 #define TRUE 1
 #define FALSE 0
@@ -191,6 +205,12 @@ void configureTimers( void ){
   //Enable overflow interrupts for T/C 0
   TIMSK |= (1<<TOIE0);
 
+  //Sound Generation (TCNT1)
+
+
+  //Volume control (TCNT3)
+  
+
   //Eat a potato
 }
 
@@ -216,6 +236,8 @@ ISR(TIMER0_OVF_vect){  //TODO: Fix the fact that we miss every 8th
       if(minutes == 60){
         minutes = 0;
         hours += 1;
+	if(hours == 24)
+	  hours = 0;
       }
     }
   }
