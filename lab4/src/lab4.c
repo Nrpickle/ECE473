@@ -149,7 +149,9 @@ uint8_t  seconds = 0;
 uint8_t  minutes = 0;
 uint8_t  hours   = 0;
 
-//uint8_t  time24  = 0; //If 1, then display military time, otherwise standard time
+//alarm management
+uint8_t  alarmMinutes = 0;
+uint8_t  alarmHours   = 0;
 
 //Digit points
 uint8_t  dot[5] = {0,0,0,0,0};
@@ -263,12 +265,8 @@ ISR(TIMER0_OVF_vect){
   //Poke ADC and start conversion
 //  ADCSRA |= (1<< ADSC);
 
+  //Executed every second
   if(++secondsCounter == 128){//128){  //Make faster using 16
-    incrementCounter();
-    secondsCounter = 0;
-
-    //OCR2 += 0x08;
-
     seconds += 1;
     if(seconds == 60){
       seconds = 0;
@@ -281,6 +279,7 @@ ISR(TIMER0_OVF_vect){
       }
     }
   }
+  //Exectued 128Hz
   if (secondsCounter % 1 == 0){
     checkButtons();
 
@@ -288,6 +287,7 @@ ISR(TIMER0_OVF_vect){
     
     processEncoders();
   }
+  //Executed 4Hz
   if (secondsCounter % 32 == 0){  //Fast cycle
         //OCR2 += lux[brightnessControl];
         //brightnessControl = (++brightnessControl) % 10;
@@ -315,6 +315,10 @@ ISR(TIMER0_OVF_vect){
 //  ADCSRA |= (1<<ADIF);
   //Read the result (16 bits)
 //  lastADCread = ADC;
+
+
+   if(secondsCounter == 128)
+     secondsCounter = 0;
 }
 
 
@@ -401,7 +405,7 @@ void setDigit( uint8_t targetDigit ){
 
     case 0: //colon control
       SET_DIGIT_DOT();  //Digit control
-      _delay_us(100);
+      _delay_us(50);
       
       if(colon)
 	PORTA = PORTA & ~(SEG_A | SEG_B);
@@ -415,7 +419,7 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 1:
       SET_DIGIT_ONE();
-      _delay_us(100);
+      _delay_us(50);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
       else
@@ -429,7 +433,7 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 2:
       SET_DIGIT_TWO();
-      _delay_us(100);
+      _delay_us(50);
       if((settings & SET_HR) && quickToggle)
         clearSegment();
       else
@@ -439,7 +443,7 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 3:
       SET_DIGIT_THREE();
-      _delay_us(100);
+      _delay_us(50);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
@@ -449,7 +453,7 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 4:
       SET_DIGIT_FOUR();
-      _delay_us(100);
+      _delay_us(50);
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
