@@ -95,7 +95,7 @@ void inline checkButtons( void );
 void inline updateSPI( void );
 void processEncoders( void );
 
-//TODO: Move rest of function decs
+//TODO: Move rest of function decs up here
 
 //TODO: Remove all of this shit
 uint8_t randoTest = 0;
@@ -142,7 +142,8 @@ uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 uint8_t  quickToggle = 0;
-uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value
+uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value 
+
 
 //time management
 uint8_t  seconds = 0;
@@ -159,9 +160,15 @@ uint8_t  upperDot = 0;
 uint8_t  colon = 0;
 
 //Brightness management
-
 uint8_t  lux[10] = { 0x01, 0x20, 0x70, 0xA0, 0xC0, 0xD0, 0xD8, 0xDF, 0xE0, 0xEF };
 uint8_t  brightnessControl = 0;
+void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;}
+void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC
+void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (1<<ADIF); lastADCread = ADC;}
+
+//LCD Output
+char lcdOutput[40];
+uint8_t lcdCounter = 0;
 
 //Editing settings
 uint16_t settings = 0;
@@ -286,9 +293,23 @@ ISR(TIMER0_OVF_vect){
     updateSPI();
     
     processEncoders();
+
+    //Output to LCD
+    if(++lcdCounter == 16){
+      //lcdCounter = 0;
+      line2_col1();
+      //cursor_home();
+    }
+    else if(lcdCounter == 32){
+      line1_col1();
+      lcdCounter = 0;
+    }
+    
+    char2lcd(lcdOutput[lcdCounter]);
+
   }
   //Executed 4Hz
-  if (secondsCounter % 32 == 0){  //Fast cycle
+  if(secondsCounter % 32 == 0){  //Fast cycle
         //OCR2 += lux[brightnessControl];
         //brightnessControl = (++brightnessControl) % 10;
 
@@ -296,8 +317,10 @@ ISR(TIMER0_OVF_vect){
 
     //Poke ADC and start conversion
 //    ADCSRA |= (1 << ADSC);
+    
 
     quickToggle ^= 1;
+
 
     //Wait for ADC read to be complete
 //    while(bit_is_clear(ADCSRA, ADIF));
@@ -730,10 +753,13 @@ while(1){
   char lcd_str_l[16];
 
   string2lcd(" Eat a potato! :D");
+
+  strcpy(lcdOutput, "Hello, friend :)   Welcome to pr");
 //uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
 
+  setLEDBrightness(0x10);
 
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
@@ -742,8 +768,12 @@ while(1){
         _delay_us(50);
 	
 	setDigit(j);  //Contains 100uS delay
-	
+
+        //We do an ADC read around the existing delay, because it should take 
+	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
+        START_ADC_READ(); 
         _delay_us(130); //Lowest tested to be 750uS because of light bleed, can recomfirm
+	FINISH_ADC_READ();
 
         clearSegment();
 
@@ -773,7 +803,7 @@ while(1){
     string2lcd(lcd_str_l);
 
     cursor_home();
-*/   
+*/ 
 
   }
   
