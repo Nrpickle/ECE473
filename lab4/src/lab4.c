@@ -169,11 +169,33 @@ void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (
 //LCD Output
 char lcdOutput[40];
 uint8_t lcdCounter = 0;
+extern char lcd_string_array[32];
 
 //Editing settings
 uint16_t settings = 0;
 
-enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x10};
+enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04};
+
+
+void inline processLCD(){
+
+    //Output to LCD
+    ++lcdCounter;
+    if(lcdCounter == 16){
+      //lcdCounter = 0;
+      line2_col1();
+      char2lcd('7');
+      char2lcd('7');
+      //cursor_home();
+    }
+    else if(lcdCounter == 33){
+      cursor_home();//line1_col1();
+      lcdCounter = 0;
+    }
+    
+
+    char2lcd(lcdOutput[lcdCounter]);
+}
 
 //Configures the device IO (port directions and intializes some outputs)
 void configureIO( void ){
@@ -289,12 +311,15 @@ ISR(TIMER0_OVF_vect){
   }
   //Exectued 128Hz
   if (secondsCounter % 1 == 0){
+    //processLCD();
+    refresh_lcd(lcd_string_array);
+
     checkButtons();
 
     updateSPI();
     
     processEncoders();
-
+/*
     //Output to LCD
     ++lcdCounter;
     if(lcdCounter == 16){
@@ -310,7 +335,7 @@ ISR(TIMER0_OVF_vect){
     }
     
     char2lcd(lcdOutput[lcdCounter]);
-
+*/
   }
   //Executed 4Hz
   if(secondsCounter % 32 == 0){  //Fast cycle
@@ -322,6 +347,7 @@ ISR(TIMER0_OVF_vect){
     //Poke ADC and start conversion
 //    ADCSRA |= (1 << ADSC);
     
+
 
     quickToggle ^= 1;
 
@@ -452,7 +478,7 @@ void setDigit( uint8_t targetDigit ){
       else
         setSegment(output[1]);
       //Check if we want to remove a leading zero
-      if((hours > 0 && hours < 10) || (hours > 12 && hours < 22) && !(settings & TIME24)){ //Then we want to remove 0
+      if(((hours > 0) && (hours < 10)) || ((hours > 12) && (hours < 22)) && !(settings & TIME24)){ //Then we want to remove 0
         clearSegment();
       }
       if(dot[1])
@@ -760,6 +786,7 @@ while(1){
 
   strcpy(lcdOutput, "Hello, friend :)11234567890123456");
   strcpy(lcdOutput, "                |                ");
+  strcpy(lcd_string_array, "Hello, friend :)|123456789");
 //uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
