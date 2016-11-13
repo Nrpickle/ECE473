@@ -285,6 +285,7 @@ ISR(TIMER0_OVF_vect){
 	  hours = 0;
       }
     }
+
   }
   //Exectued 128Hz
   if (secondsCounter % 1 == 0){
@@ -295,13 +296,16 @@ ISR(TIMER0_OVF_vect){
     processEncoders();
 
     //Output to LCD
-    if(++lcdCounter == 16){
+    ++lcdCounter;
+    if(lcdCounter == 16){
       //lcdCounter = 0;
       line2_col1();
+      char2lcd('7');
+      char2lcd('7');
       //cursor_home();
     }
-    else if(lcdCounter == 32){
-      line1_col1();
+    else if(lcdCounter == 33){
+      cursor_home();//line1_col1();
       lcdCounter = 0;
     }
     
@@ -752,9 +756,10 @@ while(1){
   uint16_t temp_adcResult = 0;
   char lcd_str_l[16];
 
-  string2lcd(" Eat a potato! :D");
+  string2lcd("-------------------------------");
 
-  strcpy(lcdOutput, "Hello, friend :)   Welcome to pr");
+  strcpy(lcdOutput, "Hello, friend :)11234567890123456");
+  strcpy(lcdOutput, "                |                ");
 //uint8_t counter = 0;
 
   ENABLE_LED_CONTROL();
