@@ -312,13 +312,20 @@ ISR(TIMER0_OVF_vect){
   //Exectued 128Hz
   if (secondsCounter % 1 == 0){
     //processLCD();
-    refresh_lcd(lcd_string_array);
+    //refresh_lcd(lcd_string_array);
 
     checkButtons();
 
-    updateSPI();
+    //_delay_us(40);
+
+    //updateSPI();
     
     processEncoders();
+
+    if(minutes == 2)
+      strcpy(lcd_string_array, "Testing number two!");
+    if(minutes == 3)
+      strcpy(lcd_string_array, "Go eat a potato       <3");
 /*
     //Output to LCD
     ++lcdCounter;
@@ -789,6 +796,18 @@ while(1){
   strcpy(lcd_string_array, "Hello, friend :)|123456789");
 //uint8_t counter = 0;
 
+  _delay_us(300);
+
+  updateSPI();
+
+  uint8_t z = 0;
+  for(z = 0; z < 45; z++){
+    refresh_lcd(lcd_string_array);
+    _delay_us(50);
+  }
+
+  updateSPI();
+ 
   ENABLE_LED_CONTROL();
 
   setLEDBrightness(0x10);
@@ -801,11 +820,16 @@ while(1){
 	
 	setDigit(j);  //Contains 100uS delay
 
+        updateSPI();
+
         //We do an ADC read around the existing delay, because it should take 
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
         START_ADC_READ(); 
         _delay_us(130); //Lowest tested to be 750uS because of light bleed, can recomfirm
 	FINISH_ADC_READ();
+        
+	//refresh_lcd(lcd_string_array);
+	//_delay_us(100);
 
         clearSegment();
 
@@ -814,6 +838,10 @@ while(1){
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
 
+
+    refresh_lcd(lcd_string_array);
+
+    _delay_us(100); 
 /*
     //ADC test code
     ADCSRA |= (1<<ADSC);
