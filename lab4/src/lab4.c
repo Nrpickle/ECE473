@@ -91,6 +91,7 @@ void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void processButtonPress( void );
 void processCounterOutput( void );
+void inline processAlarm( void );
 void inline checkButtons( void );
 void inline updateSPI( void );
 void processEncoders( void );
@@ -150,7 +151,7 @@ uint8_t  seconds = 0;
 uint8_t  minutes = 0;
 uint8_t  hours   = 0;
 
-//alarm management
+//alarm management (alarm is in 24 hours)
 uint8_t  alarmMinutes = 0;
 uint8_t  alarmHours   = 0;
 
@@ -170,11 +171,12 @@ void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (
 char lcdOutput[40];
 uint8_t lcdCounter = 0;
 extern char lcd_string_array[32];
+char lcd_final[32];
 
 //Editing settings
 uint16_t settings = 0;
 
-enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04};
+enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
 
 void inline processLCD(){
@@ -539,10 +541,8 @@ void processButtonPress( void ){
       inc4Bool ^= 0x01;
       bargraphOutput ^= (1 << 1);
       break;
-    case 0x10: //Test button
-      hours = 11;
-      minutes = 44;
-      seconds = 55;
+    case 0x10: //Arm alarm button
+      settings ^= ALARM_ARMED;
       break;
     case 0x20: //Set military time button
       settings ^= TIME24;
@@ -611,6 +611,26 @@ void processCounterOutput( void ){
   else
     colon = TRUE;
   
+
+}
+
+//This function processes everything having to do with the alarm on the clock
+void inline processAlarm( void ){
+  if(settings & ALARM_ARMED){
+    lcd_string_array[0] = 'A';
+    lcd_string_array[1] = 'L';
+    lcd_string_array[2] = 'A';
+    lcd_string_array[3] = 'R';
+    lcd_string_array[4] = 'M';
+  }
+  else{
+    lcd_string_array[0] = 'a';
+    lcd_string_array[1] = 'l';
+    lcd_string_array[2] = 'a';
+    lcd_string_array[3] = 'r';
+    lcd_string_array[4] = 'm';
+  }
+
 
 }
 
@@ -791,15 +811,14 @@ while(1){
 
   string2lcd("-------------------------------");
 
-  strcpy(lcdOutput, "Hello, friend :)11234567890123456");
-  strcpy(lcdOutput, "                |                ");
-  strcpy(lcd_string_array, "Hello, friend :)|123456789");
+  strcpy(lcdOutput, "Hello, friend :)11234567890123459");
+  strcpy(lcd_string_array, "                                ");
+//  strcpy(lcd_string_array, "Hello, friend :)|123456789");
 //uint8_t counter = 0;
 
   _delay_us(300);
 
-  updateSPI();
-
+/*
   uint8_t z = 0;
   for(z = 0; z < 45; z++){
     refresh_lcd(lcd_string_array);
@@ -807,7 +826,7 @@ while(1){
   }
 
   updateSPI();
- 
+*/ 
   ENABLE_LED_CONTROL();
 
   setLEDBrightness(0x10);
@@ -837,9 +856,10 @@ while(1){
     }
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
+    processAlarm();          //This processes the alarm outputs
 
-
-    refresh_lcd(lcd_string_array);
+    if(!refresh_lcd(lcd_final))
+      strcpy(lcd_final, lcd_string_array);
 
     _delay_us(100); 
 /*
