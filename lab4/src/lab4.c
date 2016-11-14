@@ -152,8 +152,8 @@ uint8_t  minutes = 0;
 uint8_t  hours   = 0;
 
 //alarm management (alarm is in 24 hours)
-uint8_t  alarmMinutes = 0;
-uint8_t  alarmHours   = 0;
+uint8_t  alarmMinutes = 35;
+uint8_t  alarmHours   = 13;
 
 //Digit points
 uint8_t  dot[5] = {0,0,0,0,0};
@@ -323,11 +323,6 @@ ISR(TIMER0_OVF_vect){
     //updateSPI();
     
     processEncoders();
-
-    if(minutes == 2)
-      strcpy(lcd_string_array, "Testing number two!");
-    if(minutes == 3)
-      strcpy(lcd_string_array, "Go eat a potato       <3");
 /*
     //Output to LCD
     ++lcdCounter;
@@ -533,13 +528,19 @@ void processButtonPress( void ){
   uint8_t temp = 0xFF - PINA;
 
   switch(temp){
-    case 0x01:
-      inc2Bool ^= 0x01;
-      bargraphOutput ^= (1 << 0);
+    case 0x01: //Add to alarm minutes
+      alarmMinutes += 5;
+      if(alarmMinutes >= 60){
+        alarmMinutes = 0;
+	++alarmHours;
+	if(alarmHours >= 24)
+	  alarmHours = 0;
+      }
       break;
-    case 0x02:
-      inc4Bool ^= 0x01;
-      bargraphOutput ^= (1 << 1);
+    case 0x02: //Add to alarm hours
+      ++alarmHours;
+      if(alarmHours >= 24)
+        alarmHours = 0;
       break;
     case 0x10: //Arm alarm button
       settings ^= ALARM_ARMED;
@@ -617,20 +618,84 @@ void processCounterOutput( void ){
 //This function processes everything having to do with the alarm on the clock
 void inline processAlarm( void ){
   if(settings & ALARM_ARMED){
+    dot[4] = 1;
     lcd_string_array[0] = 'A';
     lcd_string_array[1] = 'L';
     lcd_string_array[2] = 'A';
     lcd_string_array[3] = 'R';
     lcd_string_array[4] = 'M';
+    lcd_string_array[5] = ' ';
+    lcd_string_array[6] = '@';
+    lcd_string_array[7] = ' ';
+    if(settings & TIME24){ //24 hour mode
+      if(alarmHours == 0){
+        lcd_string_array[8] = '0';
+	lcd_string_array[9] = '0';
+      }
+      else{
+        if(alarmHours < 10)
+	  lcd_string_array[8] = '0';
+	else
+	  lcd_string_array[8] = (alarmHours / 10) + 48;
+        lcd_string_array[9] = (alarmHours % 10) + 48;
+      }
+    }
+    else{ //12 hour mode
+      if(alarmHours == 0 || alarmHours == 12){
+        lcd_string_array[8] = '1';
+	lcd_string_array[9] = '2';
+      }
+      else{ //We have to do actual math
+        if((alarmHours % 12) < 10)
+	  lcd_string_array[8] = ' ';
+	else
+	  lcd_string_array[8] = ((alarmHours % 12) / 10) + 48;
+	lcd_string_array[9] = ((alarmHours % 12) % 10) + 48;	
+      }
+    }
+    lcd_string_array[10] = ':';
+    //time for minutes
+    if(alarmMinutes < 10)
+      lcd_string_array[11] = '0';
+    else
+      lcd_string_array[11] = (alarmMinutes / 10) + 48;
+    lcd_string_array[12]  = (alarmMinutes % 10) + 48;
+    
+    if(!(settings & TIME24)){ //12 hour mode
+      if(alarmHours > 11){
+        lcd_string_array[13] = 'p';
+      }
+      else{
+        lcd_string_array[13] = 'a';
+      }
+      lcd_string_array[14] = 'm';
+      
+    }
+    else{
+        lcd_string_array[13] = ' ';
+	lcd_string_array[14] = ' ';
+    }
   }
-  else{
-    lcd_string_array[0] = 'a';
-    lcd_string_array[1] = 'l';
-    lcd_string_array[2] = 'a';
-    lcd_string_array[3] = 'r';
-    lcd_string_array[4] = 'm';
+  else{  //The alarm isn't armed
+    dot[4] = 0;
+    lcd_string_array[0] = 'n';
+    lcd_string_array[1] = 'o';
+    lcd_string_array[2] = ' ';
+    lcd_string_array[3] = 'a';
+    lcd_string_array[4] = 'l';
+    lcd_string_array[5] = 'a';
+    lcd_string_array[6] = 'r';
+    lcd_string_array[7] = 'm';
+
+    uint8_t i;
+ 
+    for(i = 0; i < 16; ++i)
+      lcd_string_array[i+8] = ' ';
   }
 
+  //lcd_string_array[5] is blank
+   
+ 
 
 }
 
@@ -809,10 +874,16 @@ while(1){
   uint16_t temp_adcResult = 0;
   char lcd_str_l[16];
 
-  string2lcd("-------------------------------");
+  string2lcd("Nick McComb     ");
+  line2_col1();
+  string2lcd(" ECE 473        ");
+
+  _delay_ms(500);
 
   strcpy(lcdOutput, "Hello, friend :)11234567890123459");
   strcpy(lcd_string_array, "                                ");
+
+  strcpy(lcd_string_array, "Nick McComb      ECE473         ");
 //  strcpy(lcd_string_array, "Hello, friend :)|123456789");
 //uint8_t counter = 0;
 
