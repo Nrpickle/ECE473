@@ -145,6 +145,14 @@ uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 uint8_t  quickToggle = 0;
 uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value 
 
+//Audio shortcuts
+//Volume control (OCR3A needs to range from 85 to 430 to be within working parameters)
+void inline SET_VOLUME(uint8_t volumePercentage){ OCR3A = volumePercentage * 3.45 + 85; }
+void inline SET_HZ(uint16_t targetHz) {OCR1A = targetHz * 50;}
+uint16_t musicCounter = 0;
+#define NUM_MUSIC_NOTES 15
+//Supposed to be the super mario theme... credit: www.mikrotik.com/wiki/Super_Mario_Theme
+uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480, 450, 430, 380, 660, 760, 860, 700, 760, 660, 520, 580, 480};
 
 //time management
 uint8_t  seconds = 0;
@@ -154,6 +162,9 @@ uint8_t  hours   = 0;
 //alarm management (alarm is in 24 hours)
 uint8_t  alarmMinutes = 35;
 uint8_t  alarmHours   = 13;
+uint8_t  currentlyAlarming = 0;
+
+
 
 //Digit points
 uint8_t  dot[5] = {0,0,0,0,0};
@@ -280,7 +291,9 @@ void configureTimers( void ){
 
   //Initialize with a 50% duty cycle
   OCR3A = 512/2;
-  OCR3A = 200;
+  
+  SET_VOLUME(20);
+  //OCR3A = 200;
 
   //Eat a potato
 }
@@ -354,6 +367,11 @@ ISR(TIMER0_OVF_vect){
 
 
     quickToggle ^= 1;
+    
+    ++musicCounter;
+
+    if(musicCounter >= NUM_MUSIC_NOTES)
+      musicCounter = 0;
 
 
     //Wait for ADC read to be complete
@@ -694,7 +712,18 @@ void inline processAlarm( void ){
   }
 
   //lcd_string_array[5] is blank
-   
+  if(0){
+    SET_VOLUME(0);
+  }
+  else {
+    //SET_HZ(400);
+    SET_VOLUME(60);
+    SET_HZ(music[musicCounter]);
+    //if(quickToggle)
+    //  SET_HZ(440);
+    //else
+    //  SET_HZ(880);
+  }
  
 
 }
