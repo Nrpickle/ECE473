@@ -74,7 +74,7 @@ void strobe_lcd(void);
 void clear_display(void);
 void char2lcd(char a_char);
 void lcd_init(void);
-void refresh_lcd(char lcd_string_array[]);
+uint8_t refresh_lcd(char lcd_string_array[]);
 void lcd_int32(int32_t l, uint8_t fieldwidth, uint8_t decpos, uint8_t bSigned, uint8_t bZeroFill);
 void lcd_int16(int16_t l, uint8_t fieldwidth, uint8_t decpos, uint8_t bZeroFill);
 void set_DDRAM_addr16(void);

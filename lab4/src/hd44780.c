@@ -81,7 +81,7 @@ void send_lcd(uint8_t cmd_or_char, uint8_t byte){
 //  | 16| 17| 18| 19| 20| 21| 22| 23| 24| 25| 26| 27| 28| 29| 30| 31|  
 //  -----------------------------------------------------------------
 //
-void refresh_lcd(char lcd_string_array[]) {
+uint8_t refresh_lcd(char lcd_string_array[]) {
 
   static uint8_t i=0;           // index into string array 
 
@@ -91,6 +91,8 @@ void refresh_lcd(char lcd_string_array[]) {
  //the cursor to the next line.
  if(i == 16){_delay_us(40); line2_col1();      } //goto line 2, 1st char 
  if(i == 32){_delay_us(40); line1_col1(); i=0; } //goto line 1, 1st char 
+
+ return i;
 }//refresh_lcd
 /***********************************************************************/
 
