@@ -153,6 +153,8 @@ uint16_t musicCounter = 0;
 #define NUM_MUSIC_NOTES 15
 //Supposed to be the super mario theme... credit: www.mikrotik.com/wiki/Super_Mario_Theme
 uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480, 450, 430, 380, 660, 760, 860, 700, 760, 660, 520, 580, 480};
+#define ALARM_VOLUME 60
+
 
 //time management
 uint8_t  seconds = 0;
@@ -161,9 +163,10 @@ uint8_t  hours   = 0;
 
 //alarm management (alarm is in 24 hours)
 uint8_t  alarmMinutes = 35;
-uint8_t  alarmHours   = 13;
+uint8_t  alarmHours   = 1;
 uint8_t  currentlyAlarming = 0;
-
+uint16_t snoozeCount = 0;
+#define SNOOZE_SECONDS 10
 
 
 //Digit points
@@ -321,6 +324,10 @@ ISR(TIMER0_OVF_vect){
 	if(hours >= 24)
 	  hours = 0;
       }
+    }
+
+    if(snoozeCount > 0){//If a snooze has been activated
+      ++snoozeCount;
     }
 
   }
@@ -560,6 +567,14 @@ void processButtonPress( void ){
       if(alarmHours >= 24)
         alarmHours = 0;
       break;
+    case 0x04: //Kill alarm
+      currentlyAlarming = 0;
+      snoozeCount = 0;      //We also want to get rid of snooze
+      break;
+    case 0x08: //Snooze alarm
+      currentlyAlarming = 0; //Kill the alarm
+      settings &= ~ALARM_ARMED; //Disarm the alarm
+      snoozeCount = 1;       //This starts the snooze counter
     case 0x10: //Arm alarm button
       settings ^= ALARM_ARMED;
       break;
@@ -634,8 +649,57 @@ void processCounterOutput( void ){
 }
 
 //This function processes everything having to do with the alarm on the clock
+//This function has two main parts: detecting alarm triggers and parsing alarm output (LCD and Audio)
 void inline processAlarm( void ){
-  if(settings & ALARM_ARMED){
+  //Detecting Alarm Triggers
+
+  //Check if the alarm is armed and the time is right...
+  if(!(settings & SET_MIN) && !(settings & SET_HR) && (settings & ALARM_ARMED) && alarmHours == hours && alarmMinutes == minutes){
+    settings &= ~ALARM_ARMED; //Unarm alarm
+    currentlyAlarming = 1;    //Trigger alarm
+  }
+
+  //Check the snooze condition
+  if(snoozeCount >= (SNOOZE_SECONDS + 1)){
+    currentlyAlarming = 1;
+    snoozeCount = 0; //Stop the snooze count
+  }
+
+  //Detecting Alarm output
+  if(currentlyAlarming){
+    uint8_t k;
+    for(k = 0; k < 16; ++k)
+      lcd_string_array[k] = ' ';
+    lcd_string_array[17] = 'W';
+    lcd_string_array[18] = 'A';
+    lcd_string_array[19] = 'K';
+    lcd_string_array[20] = 'E';
+    lcd_string_array[21] = ' ';
+    lcd_string_array[22] = 'U';
+    lcd_string_array[23] = 'P';
+    lcd_string_array[24] = ' ';
+    lcd_string_array[25] = ':';
+    lcd_string_array[26] = ')';
+
+  }
+  else if(snoozeCount > 1){
+    uint8_t k;
+    for(k = 0; k < 16; ++k)
+      lcd_string_array[k] = ' ';
+
+    lcd_string_array[17] = 'Z';
+    lcd_string_array[18] = 'z';
+    lcd_string_array[19] = 'Z';
+    lcd_string_array[20] = 'z';
+    lcd_string_array[21] = 'Z';
+    lcd_string_array[22] = 'z';
+    lcd_string_array[23] = 'Z';
+    lcd_string_array[24] = 'z';
+    lcd_string_array[25] = 'Z';
+    lcd_string_array[26] = 'z';
+
+  }
+  else if(settings & ALARM_ARMED){  //If no alarm, no snooze, but alarm is set, we want to output when we are going to alarm
     dot[4] = 1;
     lcd_string_array[0] = 'A';
     lcd_string_array[1] = 'L';
@@ -693,8 +757,13 @@ void inline processAlarm( void ){
         lcd_string_array[13] = ' ';
 	lcd_string_array[14] = ' ';
     }
+    uint8_t p;
+
+    //Clean up the second line
+    for(p = 16; p < 32; ++p)
+      lcd_string_array[p] = ' ';
   }
-  else{  //The alarm isn't armed
+  else{  //The alarm isn't armed, so we want to output that fact
     dot[4] = 0;
     lcd_string_array[0] = 'n';
     lcd_string_array[1] = 'o';
@@ -707,17 +776,17 @@ void inline processAlarm( void ){
 
     uint8_t i;
  
-    for(i = 0; i < 16; ++i)
+    for(i = 0; i < 20; ++i)
       lcd_string_array[i+8] = ' ';
   }
 
   //lcd_string_array[5] is blank
-  if(0){
+  if(!currentlyAlarming){
     SET_VOLUME(0);
   }
   else {
     //SET_HZ(400);
-    SET_VOLUME(60);
+    SET_VOLUME(ALARM_VOLUME);
     SET_HZ(music[musicCounter]);
     //if(quickToggle)
     //  SET_HZ(440);
