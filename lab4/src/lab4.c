@@ -89,9 +89,10 @@ void configureSPI( void );
 void configureADC( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
-void processButtonPress( void );
-void processCounterOutput( void );
+void        processButtonPress( void );
+void        processCounterOutput( void );
 void inline processAlarm( void );
+void inline processOutputBrightness( void );
 void inline checkButtons( void );
 void inline updateSPI( void );
 void processEncoders( void );
@@ -177,9 +178,11 @@ uint8_t  colon = 0;
 //Brightness management
 uint8_t  lux[10] = { 0x01, 0x20, 0x70, 0xA0, 0xC0, 0xD0, 0xD8, 0xDF, 0xE0, 0xEF };
 uint8_t  brightnessControl = 0;
-void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;}
+void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;} //0 to 255 control
 void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC
 void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (1<<ADIF); lastADCread = ADC;}
+
+#define DEBUG_LIGHT_SENSE_ADC  //Uncomment if you want the ADC count outputted on the LCD
 
 //LCD Output
 char lcdOutput[40];
@@ -669,6 +672,7 @@ void inline processAlarm( void ){
     snoozeCount = 0; //Stop the snooze count
   }
 
+
   //Detecting Alarm output
   if(currentlyAlarming){
     uint8_t k;
@@ -797,9 +801,23 @@ void inline processAlarm( void ){
     //else
     //  SET_HZ(880);
   }
- 
+  
+  #ifdef DEBUG_LIGHT_SENSE_ADC
+    //ADC testing code
+    lcd_string_array[29] = (lastADCread / 100) + 48;
+    lcd_string_array[30] = ((lastADCread / 10)%10) + 48;
+    lcd_string_array[31] = (lastADCread % 10) + 48;
+  #endif
 
 }
+
+
+//Processed the ADC count and adjusts the output brighness for the screen
+void inline processOutputBrightness( void ){
+  setLEDBrightness(0xFF - (lastADCread * .227 + 27));
+
+}
+
 
 //Checks the buttons when called, and calls a seperate processing function once the buttons have been debounced
 //It will call it only once per button press, and resets upon button release.
@@ -1029,12 +1047,15 @@ while(1){
     }
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
-    processAlarm();          //This processes the alarm outputs
+    processAlarm();          //This processes the alarm outputs (incl the LCD)
+    processOutputBrightness();
 
+    //Refresh the LCD and when the string has been outputted, copy the queued string into
+    //the string to be outputted. This prevents weird artifacts from appearing on the screen.
     if(!refresh_lcd(lcd_final))
       strcpy(lcd_final, lcd_string_array);
 
-    _delay_us(100); 
+    _delay_us(50); 
 /*
     //ADC test code
     ADCSRA |= (1<<ADSC);
