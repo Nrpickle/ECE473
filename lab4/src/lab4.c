@@ -162,8 +162,8 @@ uint8_t  minutes = 0;
 uint8_t  hours   = 0;
 
 //alarm management (alarm is in 24 hours)
-uint8_t  alarmMinutes = 35;
-uint8_t  alarmHours   = 1;
+uint8_t  alarmMinutes = 20;
+uint8_t  alarmHours   = 0;
 uint8_t  currentlyAlarming = 0;
 uint16_t snoozeCount = 0;
 #define SNOOZE_SECONDS 10
@@ -572,9 +572,12 @@ void processButtonPress( void ){
       snoozeCount = 0;      //We also want to get rid of snooze
       break;
     case 0x08: //Snooze alarm
-      currentlyAlarming = 0; //Kill the alarm
-      settings &= ~ALARM_ARMED; //Disarm the alarm
-      snoozeCount = 1;       //This starts the snooze counter
+      if(currentlyAlarming){
+        currentlyAlarming = 0; //Kill the alarm
+        settings &= ~(ALARM_ARMED); //Disarm the alarm
+        snoozeCount = 1;       //This starts the snooze counter
+      }
+      break;
     case 0x10: //Arm alarm button
       settings ^= ALARM_ARMED;
       break;
@@ -661,6 +664,7 @@ void inline processAlarm( void ){
 
   //Check the snooze condition
   if(snoozeCount >= (SNOOZE_SECONDS + 1)){
+    settings &= ~ALARM_ARMED;  //Disarm alarm
     currentlyAlarming = 1;
     snoozeCount = 0; //Stop the snooze count
   }
