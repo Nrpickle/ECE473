@@ -144,13 +144,13 @@ uint16_t volatile lastADCread = 217;  //Last ADC reading, default to a realistic
 
 //Audio shortcuts
 //Volume control (OCR3A needs to range from 85 to 430 to be within working parameters)
+#define ALARM_VOLUME 60 //Alarm volume in percentage
 void inline SET_VOLUME(uint8_t volumePercentage){ OCR3A = volumePercentage * 3.45 + 85; }
 void inline SET_HZ(uint16_t targetHz) {OCR1A = targetHz * 50;}
 uint16_t musicCounter = 0;
 #define NUM_MUSIC_NOTES 15
 //Supposed to be the super mario theme... credit: www.mikrotik.com/wiki/Super_Mario_Theme
 uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480, 450, 430, 380, 660, 760, 860, 700, 760, 660, 520, 580, 480};
-#define ALARM_VOLUME 60
 
 //LED Mangement
 uint8_t volatile global_targetDigit = 0;
@@ -180,7 +180,7 @@ void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;}
 void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC (takes ~108uS)
 void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (1<<ADIF); lastADCread = ADC;}
 
-#define DEBUG_LIGHT_SENSE_ADC  //Uncomment if you want the ADC count outputted on the LCD
+//#define DEBUG_LIGHT_SENSE_ADC  //Uncomment if you want the ADC count outputted on the LCD
 
 //LCD Output
 char lcdOutput[40];
