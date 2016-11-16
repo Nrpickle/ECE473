@@ -24,10 +24,8 @@
 //TODO STUFF
 /*
 
-Enable audio PWM
-enable dimming PWM
-dimming PWM logic
-
+fix dimming logic
+make volume go all the way to zero
 
 
 */
@@ -55,6 +53,7 @@ dimming PWM logic
 #define SEG_F  0x20
 #define SEG_G  0x40
 #define SEG_DP 0x80
+#define SEG_OFF 0xFF
 
 //PORTB Definitions
 #define DIG_SEL_1 0x10
@@ -64,9 +63,6 @@ dimming PWM logic
 
 //PORTD Definitions
 #define AUDIO_OUT 0x10
-
-//Segment definitions
-#define SEG_OFF 0xFF 
 
 //holds data to be sent to the segments. logic zero turns segment on
 uint8_t segment_data[5];
@@ -145,6 +141,7 @@ uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 uint8_t  quickToggle = 0;
 uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value 
+#define P_SET_DEL 20
 
 //Audio shortcuts
 //Volume control (OCR3A needs to range from 85 to 430 to be within working parameters)
@@ -160,7 +157,7 @@ uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480
 //time management
 uint8_t  seconds = 0;
 uint8_t  minutes = 0;
-uint8_t  hours   = 0;
+uint8_t  hours   = 1;  //TODO change start time
 
 //alarm management (alarm is in 24 hours)
 uint8_t  alarmMinutes = 20;
@@ -178,7 +175,7 @@ uint8_t  colon = 0;
 //Brightness management
 uint8_t  lux[10] = { 0x01, 0x20, 0x70, 0xA0, 0xC0, 0xD0, 0xD8, 0xDF, 0xE0, 0xEF };
 uint8_t  brightnessControl = 0;
-void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;} //0 to 255 control
+void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;} //0 to 255 control, lower is brigher
 void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC
 void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (1<<ADIF); lastADCread = ADC;}
 
@@ -486,11 +483,16 @@ void inline clearSegment( void ){
 //NOTE: There is an inherient 100uS delay with any call of this function
 void setDigit( uint8_t targetDigit ){
   clearSegment();
+  _delay_us(5);
+  NOP();
+  NOP();
   switch(targetDigit){
 
     case 0: //colon control
       SET_DIGIT_DOT();  //Digit control
-      _delay_us(50);
+      //_delay_us(P_SET_DEL);
+      NOP();
+      NOP();
       
       if(colon)
 	PORTA = PORTA & ~(SEG_A | SEG_B);
@@ -504,21 +506,27 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 1:
       SET_DIGIT_ONE();
-      _delay_us(50);
+      //_delay_us(P_SET_DEL);
+      NOP();
+      NOP();
       if((settings & SET_HR) && quickToggle)
         clearSegment();
-      else
-        setSegment(output[1]);
+      //else
+      //  setSegment(output[1]);
       //Check if we want to remove a leading zero
-      if(((hours > 0) && (hours < 10)) || ((hours > 12) && (hours < 22)) && !(settings & TIME24)){ //Then we want to remove 0
+      else if(((hours > 0) && (hours < 10)) || ((hours > 12) && (hours < 22)) && !(settings & TIME24)){ //Then we want to remove 0
         clearSegment();
       }
+      else
+        setSegment(output[1]);
       if(dot[1])
         PORTA = PORTA & ~(SEG_DP);
       break;
     case 2:
       SET_DIGIT_TWO();
-      _delay_us(50);
+      //_delay_us(P_SET_DEL);
+      NOP();
+      NOP();
       if((settings & SET_HR) && quickToggle)
         clearSegment();
       else
@@ -528,7 +536,9 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 3:
       SET_DIGIT_THREE();
-      _delay_us(50);
+      //_delay_us(P_SET_DEL);
+      NOP();
+      NOP();
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
@@ -538,7 +548,9 @@ void setDigit( uint8_t targetDigit ){
       break;
     case 4:
       SET_DIGIT_FOUR();
-      _delay_us(50);
+      //_delay_us(P_SET_DEL);
+      NOP();
+      NOP();
       if((settings & SET_MIN) && quickToggle)
         clearSegment();
       else
@@ -813,8 +825,17 @@ void inline processAlarm( void ){
 
 
 //Processed the ADC count and adjusts the output brighness for the screen
+//Calculations courtesy of: http://academics.triton.edu/faculty/mlarosa/slope.htm
 void inline processOutputBrightness( void ){
-  setLEDBrightness(0xFF - (lastADCread * .227 + 27));
+  //We want to set the LED brightness based upon the read ADC value
+  //The calculations were derived from experimental data
+  //setLEDBrightness(0xFF - (lastADCread * .227 + 27));  //Initial calibration
+  setLEDBrightness((lastADCread * -.152) + 170);
+
+  //TODO: add bottom threshold instead of moving entire working range
+
+  //setLEDBrightness(0x00);
+//  setLEDBrightness(0xFF - (150  * .227 + 27));
 
 }
 
@@ -824,7 +845,12 @@ void inline processOutputBrightness( void ){
 void inline checkButtons( void ){
   ENABLE_BUTTON_READ();
   ENABLE_BUFFER();
-  _delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
+  //_delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
+
+  NOP();
+  NOP();
+  NOP();
+  NOP();
 
   //Latching button debounce
   //The delay from the for loop at the beginning of this while(1) block will handle
@@ -849,6 +875,12 @@ void inline checkButtons( void ){
   }
 
   ENABLE_LED_CONTROL();
+
+  //Wait for voltages to settle before moving on
+  NOP();
+  NOP();
+  NOP();
+  NOP();
   //_delay_us(20);  //Delay to allow voltages to settle
   
 }
@@ -863,6 +895,7 @@ void inline updateSPI( void ){
   NOP();
   NOP();
 
+  //Write to the bar graph and read from the encoders
   SPDR = bargraphOutput;
   lastEncoderValue = SPDR;
 
@@ -1026,23 +1059,26 @@ while(1){
     for(k = 0; k < 15; ++k){
       for(j = 0; j < 5; ++j){
         //clearSegment();
-        _delay_us(50);
+        //_delay_us(100);
 	
 	setDigit(j);  //Contains 100uS delay
 
+        //Update everything on the SPI bus (minus the LCD)
+	//This means we're reading the encoders and writing to the bar graph
         updateSPI();
 
         //We do an ADC read around the existing delay, because it should take 
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
         START_ADC_READ(); 
-        _delay_us(130); //Lowest tested to be 750uS because of light bleed, can recomfirm
+        _delay_us(20); //Lowest tested to be 750uS because of light bleed, can recomfirm
 	FINISH_ADC_READ();
         
 	//refresh_lcd(lcd_string_array);
 	//_delay_us(100);
 
         clearSegment();
-
+	_delay_us(10);
+	NOP();
       }
     }
 
@@ -1056,28 +1092,6 @@ while(1){
       strcpy(lcd_final, lcd_string_array);
 
     _delay_us(50); 
-/*
-    //ADC test code
-    ADCSRA |= (1<<ADSC);
-
-    while(bit_is_clear(ADCSRA, ADIF));
-
-    ADCSRA |= (1<<ADIF);
-
-    temp_adcResult = ADC;
-*/
-
-/*
-    itoa(lastADCread, lcd_str_l, 10);
-
-    clear_display();
-    NOP();
-    NOP();
-    string2lcd(" ");
-    string2lcd(lcd_str_l);
-
-    cursor_home();
-*/ 
 
   }
   
