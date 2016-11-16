@@ -192,7 +192,14 @@ uint16_t settings = 0;
 
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
+//Debugging
+#define DEBUG_HIGH() {PORTF |=  0x08;}
+#define DEBUG_LOW()  {PORTF &= ~0x08;}
 
+
+//NOT USED
+//This was a function used by me to async update the LCD, however I ended up
+//using a modified version of the code that Traylor provided on his GitHub
 void inline processLCD(){
 
     //Output to LCD
@@ -233,9 +240,6 @@ void configureIO( void ){
   //Volume control pin
   DDRE |= 0x08;
 
-  //For this lab, we are just driving the PWM_CTRL line low always
-  //PORTB |= PWM_CTRL;  
-  //(it defaults to low)
   uint8_t i;
 
   //Init output to 0
@@ -247,6 +251,9 @@ void configureIO( void ){
   ENC_CLK_DISABLE();
   ENC_PARALLEL_ENABLE();
 
+
+  DDRF |=   0x08; //Enable PORTF PIN3 as a debug output
+  PORTF &= ~0x08;  //Set the pin low to start
 }
 
 //Configures all timer/counters on the device
@@ -333,45 +340,14 @@ ISR(TIMER0_OVF_vect){
   }
   //Exectued 128Hz
   if (secondsCounter % 1 == 0){
-    //processLCD();
-    //refresh_lcd(lcd_string_array);
-
-    checkButtons();
-
+    //checkButtons();
     //_delay_us(40);
-
     //updateSPI();
     
     processEncoders();
-/*
-    //Output to LCD
-    ++lcdCounter;
-    if(lcdCounter == 16){
-      //lcdCounter = 0;
-      line2_col1();
-      char2lcd('7');
-      char2lcd('7');
-      //cursor_home();
-    }
-    else if(lcdCounter == 33){
-      cursor_home();//line1_col1();
-      lcdCounter = 0;
-    }
-    
-    char2lcd(lcdOutput[lcdCounter]);
-*/
   }
   //Executed 4Hz
   if(secondsCounter % 32 == 0){  //Fast cycle
-        //OCR2 += lux[brightnessControl];
-        //brightnessControl = (++brightnessControl) % 10;
-
-  //PORTD ^= AUDIO_OUT; 
-
-    //Poke ADC and start conversion
-//    ADCSRA |= (1 << ADSC);
-    
-
 
     quickToggle ^= 1;
     
@@ -379,28 +355,10 @@ ISR(TIMER0_OVF_vect){
 
     if(musicCounter >= NUM_MUSIC_NOTES)
       musicCounter = 0;
-
-
-    //Wait for ADC read to be complete
-//    while(bit_is_clear(ADCSRA, ADIF));
-    //When it's done, clear the interrupt flag by writing a one
-//    ADCSRA |= (1<<ADIF);
-    //Read the result (16 bits)
-//    lastADCread = ADC;
   }
 
-  //Read ADC value
-
-  //Wait for ADC read to be complete
-//  while(bit_is_clear(ADCSRA, ADIF));
-  //When it's done, clear the interrupt flag by writing a one
-//  ADCSRA |= (1<<ADIF);
-  //Read the result (16 bits)
-//  lastADCread = ADC;
-
-
-   if(secondsCounter == 128)
-     secondsCounter = 0;
+  if(secondsCounter == 128)
+    secondsCounter = 0;
 }
 
 
@@ -823,6 +781,8 @@ void inline processAlarm( void ){
 
 }
 
+#define MIN_BRT 180
+#define MAX_BRT 0
 
 //Processed the ADC count and adjusts the output brighness for the screen
 //Calculations courtesy of: http://academics.triton.edu/faculty/mlarosa/slope.htm
@@ -830,12 +790,13 @@ void inline processOutputBrightness( void ){
   //We want to set the LED brightness based upon the read ADC value
   //The calculations were derived from experimental data
   //setLEDBrightness(0xFF - (lastADCread * .227 + 27));  //Initial calibration
-  setLEDBrightness((lastADCread * -.152) + 170);
+  //setLEDBrightness((lastADCread * -.152) + 170);
 
   //TODO: add bottom threshold instead of moving entire working range
 
   //setLEDBrightness(0x00);
-//  setLEDBrightness(0xFF - (150  * .227 + 27));
+  setLEDBrightness(250);
+  //setLEDBrightness(0xFF - (150  * .227 + 27));
 
 }
 
@@ -1055,6 +1016,8 @@ while(1){
 
   setLEDBrightness(0x10);
 
+  DEBUG_LOW();
+
   while(1){  //Main control loop
     for(k = 0; k < 15; ++k){
       for(j = 0; j < 5; ++j){
@@ -1065,13 +1028,15 @@ while(1){
 
         //Update everything on the SPI bus (minus the LCD)
 	//This means we're reading the encoders and writing to the bar graph
-        updateSPI();
+        //updateSPI();
 
         //We do an ADC read around the existing delay, because it should take 
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
+	DEBUG_HIGH();
         START_ADC_READ(); 
-        _delay_us(20); //Lowest tested to be 750uS because of light bleed, can recomfirm
+        //_delay_us(70); //Lowest tested to be 750uS because of light bleed, can recomfirm
 	FINISH_ADC_READ();
+	DEBUG_LOW();
         
 	//refresh_lcd(lcd_string_array);
 	//_delay_us(100);
@@ -1082,16 +1047,20 @@ while(1){
       }
     }
 
-    processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
-    processAlarm();          //This processes the alarm outputs (incl the LCD)
+    //processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
+    //processAlarm();          //This processes the alarm outputs (incl the LCD)
     processOutputBrightness();
+
+//    DEBUG_HIGH();
+//    _delay_us(500);
+//    DEBUG_LOW();
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
-    if(!refresh_lcd(lcd_final))
-      strcpy(lcd_final, lcd_string_array);
+    //if(!refresh_lcd(lcd_final))
+    //  strcpy(lcd_final, lcd_string_array);
 
-    _delay_us(50); 
+    //_delay_us(50); 
 
   }
   
