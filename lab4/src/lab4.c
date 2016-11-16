@@ -139,7 +139,7 @@ uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
 uint8_t  volatile quickToggle = 0;
-uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value 
+uint16_t volatile lastADCread = 217;  //Last ADC reading, default to a realistic value 
 #define P_SET_DEL 20
 
 //Audio shortcuts
@@ -194,7 +194,7 @@ uint16_t volatile settings = 0;
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
 //Debugging
-#define DEBUG_PIN 0x10
+#define DEBUG_PIN 0x02
 
 #define DEBUG_HIGH() {PORTF |=  DEBUG_PIN;}
 #define DEBUG_LOW()  {PORTF &= ~DEBUG_PIN;}
@@ -255,7 +255,7 @@ void configureIO( void ){
   ENC_PARALLEL_ENABLE();
 
 
-  DDRF |=   DEBUG_PIN; //Enable PORTF PIN3 as a debug output
+  DDRF |=   DEBUG_PIN; //Enable PORTF PINX as a debug output
   DEBUG_LOW();  //Set the pin low to start
 }
 
@@ -392,7 +392,7 @@ void configureADC( void ){
   //Enable the ADC, don't start yet, single shot mode
   //division factor is 128 (125khz)
   //enable interrupts on conversion
-  ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2) | (1<<ADIF);
+  ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2) | (1<<ADIE);
 
 
    
@@ -402,6 +402,7 @@ void configureADC( void ){
 //Stores the result of the ADC conversion
 ISR(ADC_vect){
   lastADCread = ADC; 
+  hours = 8;
 }
 
 //Outputs the proper segment based on the input number
@@ -1033,8 +1034,6 @@ while(1){
 
   setLEDBrightness(0x10);
 
-  DEBUG_LOW();
-
   while(1){  //Main control loop
     for(k = 0; k < 2; ++k){
       for(j = 0; j < 5; ++j){
@@ -1077,10 +1076,6 @@ while(1){
     processAlarm();          //This processes the alarm outputs (incl the LCD)
     processOutputBrightness();
 
-//    DEBUG_HIGH();
-//    _delay_us(500);
-//    DEBUG_LOW();
-
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
     if(!refresh_lcd(lcd_final))
@@ -1090,7 +1085,7 @@ DEBUG_HIGH();
 
     //refresh_lcd(lcd_string_array);
 
-DEBUG_LOW();
+//DEBUG_LOW();
 
 
     _delay_us(50); 
