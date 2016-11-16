@@ -131,7 +131,7 @@ void inline ENC_R_COUNTDOWN(void);
 #define NOP() do { __asm__ __volatile__ ("nop"); } while (0)
 
 //Global Variables
-uint32_t output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
+uint32_t volatile output[5]; //Note, this is zero indexed for digits!!! The 0 index is for the colon
 int16_t  lastEntered = 0;
 int16_t  debounceCounter = 0;
 uint8_t  unpressed = 1;
@@ -139,7 +139,7 @@ uint8_t  lastEncoderValue = 0x13;
 uint8_t  upToDateEncoderValue = 0;  //Holds whether the encoder value is a newly measured value
 uint8_t  bargraphOutput = 0;
 uint8_t  secondsCounter = 0; //When counted is 255, a second has past
-uint8_t  quickToggle = 0;
+uint8_t  volatile quickToggle = 0;
 uint16_t lastADCread = 200;  //Last ADC reading, default to a realistic value 
 #define P_SET_DEL 20
 
@@ -153,6 +153,8 @@ uint16_t musicCounter = 0;
 uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480, 450, 430, 380, 660, 760, 860, 700, 760, 660, 520, 580, 480};
 #define ALARM_VOLUME 60
 
+//LED Mangement
+uint8_t volatile global_targetDigit = 0;
 
 //time management
 uint8_t  seconds = 0;
@@ -168,15 +170,15 @@ uint16_t snoozeCount = 0;
 
 
 //Digit points
-uint8_t  dot[5] = {0,0,0,0,0};
-uint8_t  upperDot = 0;
-uint8_t  colon = 0;
+uint8_t volatile dot[5] = {0,0,0,0,0};
+uint8_t volatile upperDot = 0;
+uint8_t volatile colon = 0;
 
 //Brightness management
 uint8_t  lux[10] = { 0x01, 0x20, 0x70, 0xA0, 0xC0, 0xD0, 0xD8, 0xDF, 0xE0, 0xEF };
 uint8_t  brightnessControl = 0;
 void inline setLEDBrightness(uint8_t targetBrightness){OCR2 = targetBrightness;} //0 to 255 control, lower is brigher
-void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC
+void inline START_ADC_READ(void){ADCSRA |= (1<<ADSC);}  //Starts the read from the ADC (takes ~108uS)
 void inline FINISH_ADC_READ(void){while(bit_is_clear(ADCSRA, ADIF)); ADCSRA |= (1<<ADIF); lastADCread = ADC;}
 
 #define DEBUG_LIGHT_SENSE_ADC  //Uncomment if you want the ADC count outputted on the LCD
@@ -188,7 +190,7 @@ extern char lcd_string_array[32];
 char lcd_final[32];
 
 //Editing settings
-uint16_t settings = 0;
+uint16_t volatile settings = 0;
 
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
@@ -314,11 +316,6 @@ void configureTimers( void ){
 //Updates values
 //This ISR is invoked every 255 clock cycles of the 32.768kHz oscillator (~128Hz)
 ISR(TIMER0_OVF_vect){
-  //Begin ADC reading
-
-  //Poke ADC and start conversion
-//  ADCSRA |= (1<< ADSC);
-
   //Executed every second
   if(++secondsCounter == 128){//128){  //Make faster using 16
     seconds += 1;
@@ -338,16 +335,26 @@ ISR(TIMER0_OVF_vect){
     }
 
   }
-  //Exectued 128Hz
+ //Exectued 128Hz
   if (secondsCounter % 1 == 0){
-    //checkButtons();
+//DEBUG_HIGH();
+    //Check the buttons for input
+    checkButtons();
+    NOP();
+    NOP();
+    //Reset the outputs to be what they should be
+    setDigit(global_targetDigit);
     //_delay_us(40);
     //updateSPI();
-    
+
+//DEBUG_LOW();
     processEncoders();
   }
+//  if(secondsCounter % 16
   //Executed 4Hz
   if(secondsCounter % 32 == 0){  //Fast cycle
+
+    START_ADC_READ(); 
 
     quickToggle ^= 1;
     
@@ -383,8 +390,17 @@ void configureADC( void ){
 
   //Enable the ADC, don't start yet, single shot mode
   //division factor is 128 (125khz)
-  ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2);
+  //enable interrupts on conversion
+  ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2) | (1<<ADIF);
 
+
+   
+}
+
+
+//Stores the result of the ADC conversion
+ISR(ADC_vect){
+  lastADCread = ADC; 
 }
 
 //Outputs the proper segment based on the input number
@@ -795,7 +811,7 @@ void inline processOutputBrightness( void ){
   //TODO: add bottom threshold instead of moving entire working range
 
   //setLEDBrightness(0x00);
-  setLEDBrightness(250);
+  setLEDBrightness(230);
   //setLEDBrightness(0xFF - (150  * .227 + 27));
 
 }
@@ -1023,32 +1039,36 @@ while(1){
       for(j = 0; j < 5; ++j){
         //clearSegment();
         //_delay_us(100);
-	
-	setDigit(j);  //Contains 100uS delay
+
+//DEBUG_HIGH();
+	setDigit(j);  //At last measure takes ~9uS to run (varies 400nS)
+//DEBUG_LOW();
+        global_targetDigit = j;	
 
         //Update everything on the SPI bus (minus the LCD)
 	//This means we're reading the encoders and writing to the bar graph
-        //updateSPI();
+        updateSPI();
 
         //We do an ADC read around the existing delay, because it should take 
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
-	DEBUG_HIGH();
-        START_ADC_READ(); 
-        //_delay_us(70); //Lowest tested to be 750uS because of light bleed, can recomfirm
-	FINISH_ADC_READ();
-	DEBUG_LOW();
+//	DEBUG_HIGH();
+        //START_ADC_READ(); 
+        _delay_ms(2); //Lowest tested to be 750uS because of light bleed, can recomfirm
+	//FINISH_ADC_READ();
+//	DEBUG_LOW();
         
 	//refresh_lcd(lcd_string_array);
 	//_delay_us(100);
 
         clearSegment();
-	_delay_us(10);
+//DEBUG_LOW();
+//	_delay_us(5);
 	NOP();
       }
     }
 
-    //processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
-    //processAlarm();          //This processes the alarm outputs (incl the LCD)
+    processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
+    processAlarm();          //This processes the alarm outputs (incl the LCD)
     processOutputBrightness();
 
 //    DEBUG_HIGH();
@@ -1057,10 +1077,10 @@ while(1){
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
-    //if(!refresh_lcd(lcd_final))
-    //  strcpy(lcd_final, lcd_string_array);
+    if(!refresh_lcd(lcd_final))
+      strcpy(lcd_final, lcd_string_array);
 
-    //_delay_us(50); 
+    _delay_us(50); 
 
   }
   
