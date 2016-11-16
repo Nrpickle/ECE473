@@ -195,8 +195,10 @@ uint16_t volatile settings = 0;
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
 //Debugging
-#define DEBUG_HIGH() {PORTF |=  0x08;}
-#define DEBUG_LOW()  {PORTF &= ~0x08;}
+#define DEBUG_PIN 0x10
+
+#define DEBUG_HIGH() {PORTF |=  DEBUG_PIN;}
+#define DEBUG_LOW()  {PORTF &= ~DEBUG_PIN;}
 
 
 //NOT USED
@@ -254,8 +256,8 @@ void configureIO( void ){
   ENC_PARALLEL_ENABLE();
 
 
-  DDRF |=   0x08; //Enable PORTF PIN3 as a debug output
-  PORTF &= ~0x08;  //Set the pin low to start
+  DDRF |=   DEBUG_PIN; //Enable PORTF PIN3 as a debug output
+  DEBUG_LOW();  //Set the pin low to start
 }
 
 //Configures all timer/counters on the device
@@ -950,10 +952,10 @@ void inline decrementCounter( void ){
 
 //Parsed commands from the encoders (parsed to one call per detent)
 void inline ENC_L_COUNTUP(void){
-
+  ENC_R_COUNTUP();
 }
 void inline ENC_L_COUNTDOWN(void){
-
+  ENC_R_COUNTDOWN();
 }
 void inline ENC_R_COUNTUP(void){
   
@@ -1013,7 +1015,7 @@ while(1){
   strcpy(lcdOutput, "Hello, friend :)11234567890123459");
   strcpy(lcd_string_array, "                                ");
 
-  strcpy(lcd_string_array, "Nick McComb      ECE473         ");
+  strcpy(lcd_string_array, "Nick McComb      ECE473          ");
 //  strcpy(lcd_string_array, "Hello, friend :)|123456789");
 //uint8_t counter = 0;
 
@@ -1047,7 +1049,8 @@ while(1){
 
         //Update everything on the SPI bus (minus the LCD)
 	//This means we're reading the encoders and writing to the bar graph
-        updateSPI();
+        //updateSPI();
+	//refresh_lcd(lcd_string_array);
 
         //We do an ADC read around the existing delay, because it should take 
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
@@ -1058,6 +1061,7 @@ while(1){
 //	DEBUG_LOW();
         
 	//refresh_lcd(lcd_string_array);
+	updateSPI();
 	//_delay_us(100);
 
         clearSegment();
@@ -1077,8 +1081,15 @@ while(1){
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
-    if(!refresh_lcd(lcd_final))
-      strcpy(lcd_final, lcd_string_array);
+    //if(!refresh_lcd(lcd_final))
+    //  strcpy(lcd_final, lcd_string_array);
+
+DEBUG_HIGH();
+
+    refresh_lcd(lcd_string_array);
+
+DEBUG_LOW();
+
 
     _delay_us(50); 
 
