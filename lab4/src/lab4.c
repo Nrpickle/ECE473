@@ -24,9 +24,8 @@
 //TODO STUFF
 /*
 
-fix dimming logic
+fix dimming logic (is the ADC even working?!)
 make volume go all the way to zero
-
 
 */
 
@@ -812,7 +811,7 @@ void inline processOutputBrightness( void ){
 
   //TODO: add bottom threshold instead of moving entire working range
 
-  //setLEDBrightness(0x00);
+//  setLEDBrightness(0x00);
   setLEDBrightness(230);
   //setLEDBrightness(0xFF - (150  * .227 + 27));
 
@@ -1037,7 +1036,7 @@ while(1){
   DEBUG_LOW();
 
   while(1){  //Main control loop
-    for(k = 0; k < 15; ++k){
+    for(k = 0; k < 2; ++k){
       for(j = 0; j < 5; ++j){
         //clearSegment();
         //_delay_us(100);
@@ -1056,7 +1055,10 @@ while(1){
 	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
 //	DEBUG_HIGH();
         //START_ADC_READ(); 
-        _delay_ms(2); //Lowest tested to be 750uS because of light bleed, can recomfirm
+//	_delay_ms(2);
+        uint8_t z;
+	for(z = 0; z < 10; ++z){_delay_us(100);}
+//        _delay_us(2000); //Lowest tested to be 750uS because of light bleed, can recomfirm
 	//FINISH_ADC_READ();
 //	DEBUG_LOW();
         
@@ -1081,12 +1083,12 @@ while(1){
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
-    //if(!refresh_lcd(lcd_final))
-    //  strcpy(lcd_final, lcd_string_array);
+    if(!refresh_lcd(lcd_final))
+      strcpy(lcd_final, lcd_string_array);
 
 DEBUG_HIGH();
 
-    refresh_lcd(lcd_string_array);
+    //refresh_lcd(lcd_string_array);
 
 DEBUG_LOW();
 
@@ -1096,4 +1098,5 @@ DEBUG_LOW();
   }
   
   }
+
 }
