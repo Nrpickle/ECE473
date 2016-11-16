@@ -24,8 +24,7 @@
 //TODO STUFF
 /*
 
-fix dimming logic (is the ADC even working?!)
-make volume go all the way to zero
+
 
 */
 
@@ -143,9 +142,10 @@ uint16_t volatile lastADCread = 217;  //Last ADC reading, default to a realistic
 #define P_SET_DEL 20
 
 //Audio shortcuts
-//Volume control (OCR3A needs to range from 85 to 430 to be within working parameters)
-#define ALARM_VOLUME 60 //Alarm volume in percentage
-void inline SET_VOLUME(uint8_t volumePercentage){ OCR3A = volumePercentage * 3.45 + 85; }
+#define ALARM_VOLUME 60//%
+//Volume control (OCR3A needs to range from 85 to 430 to be within working parameters),
+//but we actually want the alarm to turn off, so we go a bit below that: 0 to 430.
+void inline SET_VOLUME(uint8_t volumePercentage){ OCR3A = volumePercentage * 4.3 + 0; }
 void inline SET_HZ(uint16_t targetHz) {OCR1A = targetHz * 50;}
 uint16_t musicCounter = 0;
 #define NUM_MUSIC_NOTES 15
@@ -157,8 +157,8 @@ uint8_t volatile global_targetDigit = 0;
 
 //time management
 uint8_t  seconds = 0;
-uint8_t  minutes = 27;
-uint8_t  hours   = 1;  //TODO change start time
+uint8_t  minutes = 0;
+uint8_t  hours   = 0;  //TODO change start time
 
 //alarm management (alarm is in 24 hours)
 uint8_t  alarmMinutes = 20;
