@@ -343,19 +343,20 @@ ISR(TIMER0_OVF_vect){
     checkButtons();
     NOP();
     NOP();
+    
     //Reset the outputs to be what they should be
     setDigit(global_targetDigit);
-    //_delay_us(40);
-    //updateSPI();
 
-//DEBUG_LOW();
+    processOutputBrightness();
+    START_ADC_READ();
+
     processEncoders();
   }
-//  if(secondsCounter % 16
+
   //Executed 4Hz
   if(secondsCounter % 32 == 0){  //Fast cycle
 
-    START_ADC_READ(); 
+    //START_ADC_READ(); 
 
     quickToggle ^= 1;
     
@@ -393,16 +394,12 @@ void configureADC( void ){
   //division factor is 128 (125khz)
   //enable interrupts on conversion
   ADCSRA = (1<<ADEN) | (1<<ADPS0) | (1<<ADPS1) | (1<<ADPS2) | (1<<ADIE);
-
-
-   
 }
 
 
 //Stores the result of the ADC conversion
 ISR(ADC_vect){
   lastADCread = ADC; 
-  hours = 8;
 }
 
 //Outputs the proper segment based on the input number
@@ -799,21 +796,36 @@ void inline processAlarm( void ){
 
 }
 
-#define MIN_BRT 180
+#define MIN_BRT 220
 #define MAX_BRT 0
+/*
+Values discission
+
+~900 is normal ambient brightness, so this is extended to 1024
+
+~450 is the desired target lower end, so a statment needs to be written to catch values below trhat
+*/
+
 
 //Processed the ADC count and adjusts the output brighness for the screen
 //Calculations courtesy of: http://academics.triton.edu/faculty/mlarosa/slope.htm
 void inline processOutputBrightness( void ){
+
+
+  if(lastADCread < 480)
+    setLEDBrightness(MIN_BRT);
+  else
+    setLEDBrightness((lastADCread * -.4) + 410);
+
+  //Past values:
   //We want to set the LED brightness based upon the read ADC value
   //The calculations were derived from experimental data
   //setLEDBrightness(0xFF - (lastADCread * .227 + 27));  //Initial calibration
   //setLEDBrightness((lastADCread * -.152) + 170);
 
-  //TODO: add bottom threshold instead of moving entire working range
-
-//  setLEDBrightness(0x00);
-  setLEDBrightness(230);
+  //Testing code:
+  //setLEDBrightness(MIN_BRT);
+  //setLEDBrightness(230);
   //setLEDBrightness(0xFF - (150  * .227 + 27));
 
 }
@@ -824,7 +836,6 @@ void inline processOutputBrightness( void ){
 void inline checkButtons( void ){
   ENABLE_BUTTON_READ();
   ENABLE_BUFFER();
-  //_delay_us(5); //Essentially a nop? No way. Not a nop. Dear god not at all. Same principle, though. Wait for voltages to settle.
 
   NOP();
   NOP();
@@ -1074,7 +1085,7 @@ while(1){
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
-    processOutputBrightness();
+    //processOutputBrightness();
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
