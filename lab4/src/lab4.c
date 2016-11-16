@@ -157,7 +157,7 @@ uint8_t volatile global_targetDigit = 0;
 
 //time management
 uint8_t  seconds = 0;
-uint8_t  minutes = 0;
+uint8_t  minutes = 27;
 uint8_t  hours   = 1;  //TODO change start time
 
 //alarm management (alarm is in 24 hours)
@@ -340,17 +340,17 @@ ISR(TIMER0_OVF_vect){
   if (secondsCounter % 1 == 0){
 //DEBUG_HIGH();
     //Check the buttons for input
-    checkButtons();
+//    checkButtons();
     NOP();
     NOP();
     
     //Reset the outputs to be what they should be
-    setDigit(global_targetDigit);
+//    setDigit(global_targetDigit);
 
     processOutputBrightness();
     START_ADC_READ();
 
-    processEncoders();
+    //processEncoders();
   }
 
   //Executed 4Hz
@@ -542,18 +542,30 @@ void processButtonPress( void ){
 
   switch(temp){
     case 0x01: //Add to alarm minutes
-      alarmMinutes += 5;
-      if(alarmMinutes >= 60){
-        alarmMinutes = 0;
-	++alarmHours;
-	if(alarmHours >= 24)
-	  alarmHours = 0;
+      if(settings & SET_MIN){
+        minutes = (minutes + 1) % 60;
+	seconds = 0;
+      }
+      else{
+        alarmMinutes += 5;
+        if(alarmMinutes >= 60){
+          alarmMinutes = 0;
+  	  ++alarmHours;
+  	  if(alarmHours >= 24)
+  	    alarmHours = 0;
+        }
       }
       break;
     case 0x02: //Add to alarm hours
-      ++alarmHours;
-      if(alarmHours >= 24)
-        alarmHours = 0;
+      if(settings & SET_HR){
+        hours = (hours + 1) % 24;
+	seconds = 0;
+      }
+      else {
+        ++alarmHours;
+        if(alarmHours >= 24)
+          alarmHours = 0;
+      }
       break;
     case 0x04: //Kill alarm
       currentlyAlarming = 0;
@@ -963,10 +975,10 @@ void inline decrementCounter( void ){
 
 //Parsed commands from the encoders (parsed to one call per detent)
 void inline ENC_L_COUNTUP(void){
-  ENC_R_COUNTUP();
+  //ENC_R_COUNTUP();
 }
 void inline ENC_L_COUNTDOWN(void){
-  ENC_R_COUNTDOWN();
+  //ENC_R_COUNTDOWN();
 }
 void inline ENC_R_COUNTUP(void){
   
@@ -1010,7 +1022,6 @@ while(1){
   sei();
 
   uint8_t temp_counter = 1;
-  uint8_t tempBool = 0x01;
 
   int j, k;
 
@@ -1045,35 +1056,24 @@ while(1){
 
   setLEDBrightness(0x10);
 
-  while(1){  //Main control loop
-    for(k = 0; k < 2; ++k){
-      for(j = 0; j < 5; ++j){
-        //clearSegment();
-        //_delay_us(100);
+  uint8_t z;
 
-//DEBUG_HIGH();
+  while(1){  //Main control loop
+    for(k = 0; k < 3; ++k){
+      for(j = 0; j < 5; ++j){
+        //Check the buttons for input
+        checkButtons(); 
 	setDigit(j);  //At last measure takes ~9uS to run (varies 400nS)
-//DEBUG_LOW();
         global_targetDigit = j;	
 
+	for(z = 0; z < 10; ++z){_delay_us(100);}
+	
         //Update everything on the SPI bus (minus the LCD)
 	//This means we're reading the encoders and writing to the bar graph
-        //updateSPI();
-	//refresh_lcd(lcd_string_array);
-
-        //We do an ADC read around the existing delay, because it should take 
-	//~104us to preform the ADC read anyway (in theory (*fingers crossed*))
-//	DEBUG_HIGH();
-        //START_ADC_READ(); 
-//	_delay_ms(2);
-        uint8_t z;
-	for(z = 0; z < 10; ++z){_delay_us(100);}
-//        _delay_us(2000); //Lowest tested to be 750uS because of light bleed, can recomfirm
-	//FINISH_ADC_READ();
-//	DEBUG_LOW();
-        
-	//refresh_lcd(lcd_string_array);
+	if(j != 0){
 	updateSPI();
+	processEncoders();
+	}
 	//_delay_us(100);
 
         clearSegment();
@@ -1085,7 +1085,6 @@ while(1){
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
-    //processOutputBrightness();
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
@@ -1094,12 +1093,9 @@ while(1){
 
 DEBUG_HIGH();
 
-    //refresh_lcd(lcd_string_array);
-
-//DEBUG_LOW();
+    for(z = 0; z < 10; ++z){_delay_us(100);}
 
 
-    _delay_us(50); 
 
   }
   
