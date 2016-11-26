@@ -8,8 +8,12 @@ Written November 2016
 */
 
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include <util/delay.h>
 #include "uart_functions.h"
+#include <string.h>
+#include "lm73_functions_skel.h"
+#include "twi_master.h"
 
 int main(){
 

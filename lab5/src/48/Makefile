@@ -1,7 +1,7 @@
 SHELL               = /bin/bash
 PRG                 = lab5_48
-OBJS                = lab5_48.o uart_functions.o
-SRCS                = lab5_48.c uart_functions.c
+OBJS                = lab5_48.o uart_functions.o lm73_functions_skel.o twi_master.o
+SRCS                = lab5_48.c uart_functions.c lm73_functions_skel.c twi_master.c
 MCU_TARGET          = atmega48
 F_CPU               = 8000000UL
 PROGRAMMER_TARGET   = m48
