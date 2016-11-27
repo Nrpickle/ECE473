@@ -69,11 +69,16 @@ int main(){
   //sei(); 
  
 //  PORTD = 0x00;
+  char outputString[50];
+  uint16_t loopCounter = 0;
+
   DDRD = 0xFD; //Set the RX pin as an input
 
   uart_init();
 
   sei();
+
+  uart_puts("[Init 48 remote]\n\r");
 
   while(1){
     
@@ -86,7 +91,10 @@ int main(){
     _delay_ms(50);
     //while(1);
     //_delay_ms(50);
-
+    
+    itoa(++loopCounter, outputString, 10);
+    uart_puts(outputString);
+    uart_puts(": ");
     uart_puts("Hello, world :)\n\r\0");
 
   }
