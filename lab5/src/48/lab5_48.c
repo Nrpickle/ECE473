@@ -12,6 +12,14 @@ GPS input looks for GPGLL (latitute and time info)
 
 */
 
+/*
+
+TODO: Test Bootup (no GPS lock case)
+
+
+*/
+
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -107,6 +115,8 @@ int main(){
   char outputString[50];
   uint16_t loopCounter = 0;
 
+  char timeStr[12]; //holds the time in string form
+  char tempStr[12]; //holds the temp in string form
 //  DDRD = 0xFE; //Set the RX pin as an input
 
   uart_init();
@@ -134,7 +144,7 @@ int main(){
     uart_puts(outputString);
     uart_puts(": ");
     
-    itoa(lm73_data, outputString, 10);
+    itoa(lm73_data, tempStr, 10);
     uart_puts(outputString);
 
     uart_puts(".");
@@ -147,13 +157,26 @@ int main(){
     else
       uart_puts("00");
 
+    uart_puts(tempStr);
 
     uart_puts(" |\n\r\0");
 
-    if(inputFlag){
+    if(inputFlag){  //Then we're ready to process input data from GPGLL
       inputFlag = 0;
-      uart_puts("### Flag Set ###\n\r");
-      uart_puts(gpgll);
+//      uart_puts("### Flag Set ###\n\r");
+
+      if(strlen(gpgll) > 15){ //Then we probably have a valid GPGLL string to process
+        char * pnt;
+        uint8_t j;
+        pnt = strtok(gpgll, ",");
+	for(j = 0; j < 5; ++j){
+	  pnt = strtok(NULL, ",");
+	}
+        strcpy(timeStr, pnt); 
+	uart_puts("Current time: "); 
+	uart_puts(timeStr);
+        uart_puts("\n\r");
+      }
 
     }
 
