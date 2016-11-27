@@ -29,9 +29,13 @@ extern uint8_t lm73_wr_buf[2];
 extern uint8_t lm73_rd_buf[2];
 uint16_t lm73_data;
 uint16_t lm73_precision;
-char     inputBuf[255];  //Massive UART RX Input buffer
+char     inputBuf[155];  //Massive UART RX Input buffer
 uint8_t  inputBufCnt = 0;
 uint8_t  inputFlag = 0;
+char gpgll[60];  //Should be larger than it can be
+uint8_t gpgllCnt = 0;
+//char lineBuf[100];
+uint8_t lineBufCnt = 0;
 
 //Prototypes
 void configureIO(void);  //conffigures GPIO
@@ -73,18 +77,26 @@ void lm73Read(void){
 
 //UART Rx Vector
 ISR(USART_RX_vect){
-  uint8_t max = 20;
+  uint8_t max = 140; //Maximum number of characters in the buffer
 
   //Get character
   inputBuf[inputBufCnt++] = UDR0;
 
-  if(inputBufCnt >= max){
-    inputBufCnt = 0;
-    inputBuf[max + 1] = '\0';
+//  if(inputBuf[inputBufCnt - 1] == '\n';
 
+//  if(inputBuf[
+
+  if(inputBufCnt >= max || inputBuf[inputBufCnt-1] == '\n'){
+    inputBuf[inputBufCnt + 1] = '\r';
+    inputBuf[inputBufCnt + 2] = '\0';
+
+    if(inputBuf[0] == '$' && inputBuf[3] == 'G' && inputBuf[4] == 'L' && inputBuf[5] == 'L'){
+      strcpy(gpgll, inputBuf);
+    }
+
+    inputBufCnt = 0;
     inputFlag = 0x01;
   }
-  uart_putc('%');
 }
 
 
@@ -140,7 +152,8 @@ int main(){
 
     if(inputFlag){
       inputFlag = 0;
-      uart_puts(inputBuf);
+      uart_puts("### Flag Set ###\n\r");
+      uart_puts(gpgll);
 
     }
 
