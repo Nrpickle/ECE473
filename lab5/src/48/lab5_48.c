@@ -74,14 +74,14 @@ void lm73Read(void){
 //UART Rx Vector
 ISR(USART0_RX_vect){
   //Get character
-//  inputBuf[inputBufCnt++] = UDR0;
+  inputBuf[inputBufCnt++] = UDR0;
 
-//  if(inputBufCnt == 100){
-//    inputBufCnt = 0;
-//    inputBuf[101] = '\0';
-//
-//    inputFlag = 0x01;
-//  }
+  if(inputBufCnt == 100){
+    inputBufCnt = 0;
+    inputBuf[101] = '\0';
+
+    inputFlag = 0x01;
+  }
 
 }
 
@@ -93,7 +93,7 @@ int main(){
   char outputString[50];
   uint16_t loopCounter = 0;
 
-  DDRD = 0xFE; //Set the RX pin as an input
+//  DDRD = 0xFE; //Set the RX pin as an input
 
   uart_init();
   init_lm73();
