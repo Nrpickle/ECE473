@@ -21,12 +21,13 @@ Basic UART test setup: https://goo.gl/JcuxMc
 
 //Global Variables
 
-/*
+
 
 //Delclare the 2 byte TWI read and write buffers (lm73_functions_skel.c)
 extern uint8_t lm73_wr_buf[2];
 extern uint8_t lm73_rd_buf[2];
 uint16_t lm73_data;
+uint16_t lm73_precision;
 
 //Prototypes
 void configureIO(void);  //conffigures GPIO
@@ -54,27 +55,31 @@ void lm73Read(void){
   lm73_temp = lm73_rd_buf[0];  //save high temperature byte into lm73_temp
   lm73_temp = lm73_temp << 8;  //shift it into upper byte 
   lm73_temp |= lm73_rd_buf[1]; //"OR" in the low temp byte to lm73_temp 
+  lm73_data = lm73_temp >> 7;
+
+//  lm73_data = lm73_temp;
  
-  lm73_data = lm73_temp;
+  lm73_precision = 0;
+ 
+  if(lm73_rd_buf[1] & 0b01000000) //Check for .5degC //bit_is_set(lm73_temp,9))
+    lm73_precision |= 0x02;
+  if(lm73_rd_buf[1] & 0b00100000) //Check for .25degC //bit_is_set(lm73_temp,10))
+    lm73_precision |= 0x01;
 }
 
-*/
+
 
 int main(){
 //  configureIO();
 //  uart_init();
-
 //  init_twi();
-  
-  //sei(); 
- 
-//  PORTD = 0x00;
   char outputString[50];
   uint16_t loopCounter = 0;
 
   DDRD = 0xFD; //Set the RX pin as an input
 
   uart_init();
+  init_lm73();
 
   sei();
 
@@ -88,14 +93,30 @@ int main(){
 //    _delay_us(2);
 //    PORTD = 0x01;
 
-    _delay_ms(50);
+    _delay_ms(250);
     //while(1);
     //_delay_ms(50);
-    
+    lm73Read();
+
     itoa(++loopCounter, outputString, 10);
     uart_puts(outputString);
     uart_puts(": ");
-    uart_puts("Hello, world :)\n\r\0");
+    
+    itoa(lm73_data, outputString, 10);
+    uart_puts(outputString);
+
+    uart_puts(".");
+    if(lm73_precision == 0x03)
+      uart_puts("75");
+    else if (lm73_precision == 0x02)
+      uart_puts("50");
+    else if (lm73_precision == 0x01)
+      uart_puts("25");
+    else
+      uart_puts("00");
+
+
+    uart_puts(" |\n\r\0");
 
   }
 }
