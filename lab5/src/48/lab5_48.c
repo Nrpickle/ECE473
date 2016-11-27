@@ -6,6 +6,8 @@ This performs the functions of an external temperature sensor, and eventually a 
 Nick McComb | www.nickmccomb.net
 Written November 2016
 
+Basic UART test setup: https://goo.gl/JcuxMc
+
 
 */
 
@@ -18,6 +20,8 @@ Written November 2016
 #include "twi_master.h"
 
 //Global Variables
+
+/*
 
 //Delclare the 2 byte TWI read and write buffers (lm73_functions_skel.c)
 extern uint8_t lm73_wr_buf[2];
@@ -54,7 +58,7 @@ void lm73Read(void){
   lm73_data = lm73_temp;
 }
 
-
+*/
 
 int main(){
 //  configureIO();
@@ -67,22 +71,23 @@ int main(){
 //  PORTD = 0x00;
   DDRD = 0xFD; //Set the RX pin as an input
 
-  //uart_init();
+  uart_init();
 
- 
+  sei();
+
   while(1){
     
 //    PORTD ^= 0x01;
 //    PORTD = 0x01;
-    PORTD = 0x00;
-    _delay_us(2);
-    PORTD = 0x01;
+//    PORTD = 0x00;
+//    _delay_us(2);
+//    PORTD = 0x01;
 
-    _delay_us(50);
+    _delay_ms(50);
     //while(1);
     //_delay_ms(50);
 
-    //uart_puts("Hello, world :)\n\r");
+    uart_puts("Hello, world :)\n\r\0");
 
   }
 }
