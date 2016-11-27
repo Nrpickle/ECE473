@@ -8,6 +8,7 @@ Written November 2016
 
 Basic UART test setup: https://goo.gl/JcuxMc
 
+GPS input looks for GPGLL (latitute and time info)
 
 */
 
@@ -28,6 +29,9 @@ extern uint8_t lm73_wr_buf[2];
 extern uint8_t lm73_rd_buf[2];
 uint16_t lm73_data;
 uint16_t lm73_precision;
+char     inputBuf[255];  //Massive UART RX Input buffer
+uint8_t  inputBufCnt = 0;
+uint8_t  inputFlag = 0;
 
 //Prototypes
 void configureIO(void);  //conffigures GPIO
@@ -67,6 +71,19 @@ void lm73Read(void){
     lm73_precision |= 0x01;
 }
 
+//UART Rx Vector
+ISR(USART0_RX_vect){
+  //Get character
+//  inputBuf[inputBufCnt++] = UDR0;
+
+//  if(inputBufCnt == 100){
+//    inputBufCnt = 0;
+//    inputBuf[101] = '\0';
+//
+//    inputFlag = 0x01;
+//  }
+
+}
 
 
 int main(){
@@ -76,7 +93,7 @@ int main(){
   char outputString[50];
   uint16_t loopCounter = 0;
 
-  DDRD = 0xFD; //Set the RX pin as an input
+  DDRD = 0xFE; //Set the RX pin as an input
 
   uart_init();
   init_lm73();
@@ -93,7 +110,7 @@ int main(){
 //    _delay_us(2);
 //    PORTD = 0x01;
 
-    _delay_ms(250);
+    _delay_ms(50);
     //while(1);
     //_delay_ms(50);
     lm73Read();
@@ -118,5 +135,11 @@ int main(){
 
     uart_puts(" |\n\r\0");
 
+/*    if(inputFlag){
+      inputFlag = 0;
+      uart_puts(inputBuf);
+
+    }
+*/
   }
 }

@@ -101,11 +101,11 @@ void uart_puts_p(const char *str) {
 //must be in place for the MAX232 chip to get data.
 
 void uart_init(){
-//rx and tx enable, receive interrupt enabled, 8 bit characters
-UCSR0B |= (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0); //INTERRUPTS ENABLED
-//  UCSR0B |= (1<<RXEN0) | (1<<TXEN0);               //INTERRUPS DISABLED
+  //rx and tx enable, receive interrupt enabled, 8 bit characters
+  UCSR0B |= (1<<RXEN0) | (1<<TXEN0) | (1<<RXCIE0); //INTERRUPTS ENABLED
+  //  UCSR0B |= (1<<RXEN0) | (1<<TXEN0);               //INTERRUPS DISABLED
 
-//async operation, no parity,  one stop bit, 8-bit characters
+  //async operation, no parity,  one stop bit, 8-bit characters
   UCSR0C |= (1<<UCSZ01) | (1<<UCSZ00);
   UBRR0H = (BAUDVALUE >>8 ); //load upper byte of the baud rate into UBRR 
   UBRR0L =  BAUDVALUE;       //load lower byte of the baud rate into UBRR 
