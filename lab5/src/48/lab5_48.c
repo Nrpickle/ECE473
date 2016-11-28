@@ -15,7 +15,7 @@ GPS input looks for GPGLL (latitute and time info)
 /*
 
 TODO: Test Bootup (no GPS lock case)
-
+TODO: Add T/C so that it outputs at a regular interval
 
 */
 
@@ -124,47 +124,34 @@ int main(){
 
   sei();
 
-  uart_puts("[Init 48 remote]\n\r");
+//  uart_puts("[Init 48 remote]\n\r");
 
   while(1){
     
-//    PORTD ^= 0x01;
-//    PORTD = 0x01;
-//    PORTD = 0x00;
-//    _delay_us(2);
-//    PORTD = 0x01;
-
-    _delay_ms(50);
-    //while(1);
-    //_delay_ms(50);
+    _delay_ms(250);
 
     lm73Read();
 
+    /* //Debug loop counter
     itoa(++loopCounter, outputString, 10);
     uart_puts(outputString);
     uart_puts(": ");
-    
+    */
+
     itoa(lm73_data, tempStr, 10);
-    uart_puts(outputString);
 
-    uart_puts(".");
+    strcat(tempStr, ".");
     if(lm73_precision == 0x03)
-      uart_puts("75");
+      strcat(tempStr, "75");  //uart_puts("75");
     else if (lm73_precision == 0x02)
-      uart_puts("50");
+      strcat(tempStr, "50"); //uart_puts("50");
     else if (lm73_precision == 0x01)
-      uart_puts("25");
+      strcat(tempStr, "25"); //uart_puts("25");
     else
-      uart_puts("00");
+      strcat(tempStr, "00"); //uart_puts("00");
 
-    uart_puts(tempStr);
-
-    uart_puts(" |\n\r\0");
-
-    if(inputFlag){  //Then we're ready to process input data from GPGLL
-      inputFlag = 0;
-//      uart_puts("### Flag Set ###\n\r");
-
+    if(inputFlag){   //Then we're ready to process input data from GPGLL
+      inputFlag = 0; //Reset input flag
       if(strlen(gpgll) > 15){ //Then we probably have a valid GPGLL string to process
         char * pnt;
         uint8_t j;
@@ -173,12 +160,19 @@ int main(){
 	  pnt = strtok(NULL, ",");
 	}
         strcpy(timeStr, pnt); 
-	uart_puts("Current time: "); 
-	uart_puts(timeStr);
-        uart_puts("\n\r");
       }
 
     }
+
+    //Assemble output string:
+    strcpy(outputString, "");
+    strcat(outputString, tempStr);
+    strcat(outputString, "|");
+    strcat(outputString, timeStr);
+    strcat(outputString, "\n");
+
+    uart_puts(outputString);
+    uart_puts("\r");
 
   }
 }
