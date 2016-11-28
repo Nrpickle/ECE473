@@ -24,6 +24,10 @@
 //TODO STUFF
 /*
 
+Output remote temp
+Implement TWI
+Implement local temp
+Implement DST
 
 
 */
@@ -37,6 +41,9 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stddef.h>
+#include "uart_functions.h"
+#include "lm73_functions_skel.h"
+#include "twi_master.h"
 #include "hd44780.h"
 
 //Program controls
@@ -72,6 +79,11 @@ uint8_t dec_to_7seg[12];
 uint16_t counter = 0;
 //TODO: Add rest of globals
 
+volatile char    rxBuffer[64];
+volatile uint8_t rxBufferCnt = 0;
+volatile char    finalBuffer[64];
+volatile uint8_t inputFlag = 0;
+volatile char remoteTemp[6];
 
 //Function Prototypes
 void inline incrementCounter( void );
@@ -1008,6 +1020,27 @@ void inline ENC_R_COUNTDOWN(void){
   }
 }
 
+ISR(USART0_RX_vect){
+  static uint8_t buf;
+
+  buf = UDR0;
+
+  rxBuffer[rxBufferCnt++] = buf;
+
+  if(rxBufferCnt > 60 || rxBuffer[rxBufferCnt-1] == '\n'){
+    rxBuffer[rxBufferCnt] = '\0';
+    rxBufferCnt = 0;
+    inputFlag = 1;
+    strcpy(finalBuffer, rxBuffer);
+//    uart_puts("##PARSE##");
+    //uart_puts(finalBuffer);
+  }
+
+//  uart_putc(buf);
+//  uart_putc('_');
+
+}
+
 //Main function call
 int main()
 {
@@ -1017,11 +1050,19 @@ while(1){
   configureTimers();
   configureSPI();
   configureADC();
+  uart_init();
   lcd_init();
   clear_display();
   sei();
 
-  uint8_t temp_counter = 1;
+  strcpy(finalBuffer, " ");
+
+  uart_puts("[128 init]\n\r");
+
+  uint8_t  temp_counter = 1;
+  int16_t timeBuf = 0;
+//  char remoteTemp[6];
+  remoteTemp[5] = '\0';
 
   int j, k;
 
@@ -1095,9 +1136,45 @@ DEBUG_HIGH();
 
     for(z = 0; z < 10; ++z){_delay_us(100);}
 
+    if(inputFlag){ //We need to parse the input from the remote sensor
+      inputFlag = 0;  //Reset flag
 
+//      uart_puts(finalBuffer);
+//      uart_puts("THIS IS A SUPER DUPER COOL TEST! :)\n\r");
+      //Check if we're receiving time info
+      if(strlen(finalBuffer) > 5){
 
-  }
+        //Calculate hours from GPS
+        timeBuf = 0;
+	timeBuf = (finalBuffer[6] - 48) * 10 + (finalBuffer[7] - 48);
+	//Daylight savings time
+        timeBuf -= 8;    //DST Hack
+	if(timeBuf < 0)  //Check for overflow
+	  timeBuf += 24; //Overflow hack
+        hours = timeBuf;
+
+	//Calculate minutes from GPS
+	timeBuf = (finalBuffer[8] - 48) * 10 + (finalBuffer[9] - 48);
+        minutes = timeBuf;
+//        uart_putc(timeBuf + 48);
+//        uart_putc(finalBuffer[6]);
+//        uart_putc(finalBuffer[7]);
+//	uart_puts("\n\r");
+      }
+      if(finalBuffer[6] == ' ') {
+        uart_puts("No time info found...\r\n");
+      }
+    }
+
+    //Process the remote temperature
+    static uint8_t k;
+    for(k = 0; k < 5; ++k)
+      remoteTemp[k] = finalBuffer[k];
+
+      uart_puts(remoteTemp);
+      uart_puts("            ");
+
+    }
   
   }
 
