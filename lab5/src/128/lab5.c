@@ -795,6 +795,15 @@ void inline processAlarm( void ){
  
     for(i = 0; i < 20; ++i)
       lcd_string_array[i+8] = ' ';
+
+//    lcd_string_array[16] = 'l';
+//2nd row begins at 16
+    //16, 17, 18 = ., 19, 20
+    //21
+    //22, 23, 24 = ., 25, 26
+    for(i = 0; i < 5; ++i){
+      lcd_string_array[i + 24] = remoteTemp[i];
+    }
   }
 
   //lcd_string_array[5] is blank
@@ -802,13 +811,8 @@ void inline processAlarm( void ){
     SET_VOLUME(0);
   }
   else {
-    //SET_HZ(400);
     SET_VOLUME(ALARM_VOLUME);
     SET_HZ(music[musicCounter]);
-    //if(quickToggle)
-    //  SET_HZ(440);
-    //else
-    //  SET_HZ(880);
   }
   
   #ifdef DEBUG_LIGHT_SENSE_ADC
@@ -1171,8 +1175,8 @@ DEBUG_HIGH();
     for(k = 0; k < 5; ++k)
       remoteTemp[k] = finalBuffer[k];
 
-      uart_puts(remoteTemp);
-      uart_puts("            ");
+//      uart_puts(remoteTemp);
+//      uart_puts("            ");
 
     }
   
