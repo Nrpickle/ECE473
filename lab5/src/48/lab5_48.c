@@ -120,10 +120,8 @@ int main(){
 //  DDRD = 0xFE; //Set the RX pin as an input
 
   uart_init();
-  //init_lm73();
-
+  init_lm73();
   sei();
-
 //  uart_puts("[Init 48 remote]\n\r");
 
   while(1){
