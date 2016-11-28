@@ -1,0 +1,5 @@
+Guide: http://www.rei-labs.net/using-and-programming-a-neo-6-gps-receiver-module/
+
+GPGLL reference: http://aprs.gids.nl/nmea/#gll
+
+
