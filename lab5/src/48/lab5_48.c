@@ -170,7 +170,8 @@ int main(){
     strcat(outputString, "\n");
 
     uart_puts(outputString);
-    uart_puts("\r");
+    //Only use the following line for computer terminal usage!
+    //uart_puts("\r");
 
   }
 }
