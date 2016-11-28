@@ -1,7 +1,7 @@
 SHELL               = /bin/bash
 PRG                 = lab5
-OBJS                = lab5.o hd44780.o 
-SRCS                = lab5.c 
+OBJS                = lab5.o hd44780.o uart_functions.o lm73_functions_skel.o twi_master.o
+SRCS                = lab5.c uart_functions.c lm73_functions_skel.c twi_master.c 
 MCU_TARGET          = atmega128
 F_CPU               = 16000000UL
 PROGRAMMER_TARGET   = m128
