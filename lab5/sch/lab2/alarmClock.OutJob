@@ -2,9 +2,9 @@
 Version=1.0
 
 [PublishSettings]
-OutputFilePath2=C:\Users\Nick\Documents\GitHub\ECE473\lab4\sch\lab2\.PDF
+OutputFilePath2=C:\Users\Nick\Documents\GitHub\ECE473\lab5\sch\lab2\.PDF
 ReleaseManaged2=0
-OutputBasePath2=C:\Users\Nick\Documents\GitHub\ECE473\lab4\sch\lab2\
+OutputBasePath2=C:\Users\Nick\Documents\GitHub\ECE473\lab5\sch\lab2\
 OutputPathMedia2=
 OutputPathMediaValue2=
 OutputPathOutputer2=[Output Type]
@@ -77,9 +77,11 @@ FFmpegPixelFormat4=0
 FFmpegQuality4=80
 WmvVideoCodecName4=Windows Media Video V7
 WmvQuality4=80
+PDFACompliance2=Disabled
+PDFVersion2=Default
 
 [GeneratedFilesSettings]
-RelativeOutputPath2=C:\Users\Nick\Documents\GitHub\ECE473\lab4\sch\lab2\.PDF
+RelativeOutputPath2=C:\Users\Nick\Documents\GitHub\ECE473\lab5\sch\lab2\.PDF
 OpenOutputs2=1
 RelativeOutputPath3=
 OpenOutputs3=1
