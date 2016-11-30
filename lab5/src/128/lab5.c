@@ -24,11 +24,11 @@
 //TODO STUFF
 /*
 
-Output remote temp
-Implement TWI
-Implement local temp
 Implement DST
 
+
+Moonshots:
+LED spinny blinky while looking for satellites
 
 */
 
@@ -49,6 +49,8 @@ Implement DST
 
 //Program controls
 //#define LEADING_0  //Whether or not you want leading zeros
+#define USE_GPS_TIME   //Whether or not you want to use GPS Time (if available)
+
 
 //Segment pin definitions
 #define SEG_A  0x01
@@ -804,14 +806,20 @@ void inline processAlarm( void ){
     for(i = 0; i < 20; ++i)
       lcd_string_array[i+8] = ' ';
 
-//    lcd_string_array[16] = 'l';
-//2nd row begins at 16
+    //Temperature planning
+    //2nd row begins at 16
     //16, 17, 18 = ., 19, 20
     //21
     //22, 23, 24 = ., 25, 26
-    for(i = 0; i < 5; ++i){
-      lcd_string_array[i + 24] = remoteTemp[i];
-    }
+
+    //Display local temperature
+    lcd_string_array[16] = 'l';
+    for(i = 0; i < 5; ++i)
+      lcd_string_array[i + 18] = tempCelString[i];
+    //Display remote temperature
+    lcd_string_array[25] = 'r';
+    for(i = 0; i < 5; ++i)
+      lcd_string_array[i + 27] = remoteTemp[i];
   }
 
   //lcd_string_array[5] is blank
@@ -1200,8 +1208,7 @@ DEBUG_HIGH();
     if(inputFlag){ //We need to parse the input from the remote sensor
       inputFlag = 0;  //Reset flag
 
-//      uart_puts(finalBuffer);
-//      uart_puts("THIS IS A SUPER DUPER COOL TEST! :)\n\r");
+#ifdef USE_GPS_TIME
       //Check if we're receiving time info
       if(strlen(finalBuffer) > 5){
 
@@ -1217,13 +1224,25 @@ DEBUG_HIGH();
 	//Calculate minutes from GPS
 	timeBuf = (finalBuffer[8] - 48) * 10 + (finalBuffer[9] - 48);
         minutes = timeBuf;
-//        uart_putc(timeBuf + 48);
-//        uart_putc(finalBuffer[6]);
-//        uart_putc(finalBuffer[7]);
-//	uart_puts("\n\r");
+	
+	//This next line disables the counting that the
+	//mega would be doing on it's own, so that if 
+	//we have a GPS lock, that is what does the
+	//coutning, but if we don't (e.g. this point is
+	//never reached), then the mega will count on it's
+	//own
+
+	//I chose 30 seconds because the colon uses the 
+	//seconds counter, and this should invisibly
+	//make the jump back to 0, while never getting
+	//high enough to trigger a minute jump
+	if(seconds >= 30)
+	  seconds = 0;
+//	seconds = 0; 
       }
+#endif 
       if(finalBuffer[6] == ' ') {
-        uart_puts("No time info found...\r\n");
+        //uart_puts("No time info found...\r\n");
       }
     }
 
@@ -1234,11 +1253,6 @@ DEBUG_HIGH();
 
     //Process the local temperature
     lm73Read();
-//    itoa(lm73_data, tempString, 10);
-    uart_puts(tempCelString);
-    uart_puts("\n\r");
-//      uart_puts(remoteTemp);
-//      uart_puts("            ");
 
     }
   
