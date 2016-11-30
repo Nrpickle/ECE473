@@ -41,6 +41,7 @@ Implement DST
 #include <avr/interrupt.h>
 #include <util/delay.h>
 #include <stddef.h>
+#include <string.h>
 #include "uart_functions.h"
 #include "lm73_functions_skel.h"
 #include "twi_master.h"
@@ -84,6 +85,13 @@ volatile uint8_t rxBufferCnt = 0;
 volatile char    finalBuffer[64];
 volatile uint8_t inputFlag = 0;
 volatile char remoteTemp[6];
+
+//Temperature data
+extern uint8_t lm73_wr_buf[2];
+extern uint8_t lm73_rd_buf[2];
+uint16_t lm73_data;
+uint16_t lm73_precision;
+char tempCelString[7];
 
 //Function Prototypes
 void inline incrementCounter( void );
@@ -1045,6 +1053,49 @@ ISR(USART0_RX_vect){
 
 }
 
+//Initialize the lm73 sensor specifically
+void init_lm73(void){
+  twi_start_wr(LM73_ADDRESS, lm73_wr_buf, 1);  //Start the TWI write process (twi_start_wr())
+}
+
+//Read from the LM73 sensor and place the data in global variables
+void lm73Read(void){
+  char static tempStr[12];
+  uint16_t lm73_temp;  //a place to assemble the temperature from the lm73
+
+  twi_start_rd(LM73_ADDRESS, lm73_rd_buf, 2); //read temperature data from LM73 (2 bytes)  (twi_start_rd())
+  _delay_ms(2);    //wait for it to finish
+  lm73_temp = lm73_rd_buf[0];  //save high temperature byte into lm73_temp
+  lm73_temp = lm73_temp << 8;  //shift it into upper byte 
+  lm73_temp |= lm73_rd_buf[1]; //"OR" in the low temp byte to lm73_temp 
+  lm73_data = lm73_temp >> 7;
+
+//  lm73_data = lm73_temp;
+ 
+  lm73_precision = 0;
+ 
+  if(lm73_rd_buf[1] & 0b01000000) //Check for .5degC //bit_is_set(lm73_temp,9))
+    lm73_precision |= 0x02;
+  if(lm73_rd_buf[1] & 0b00100000) //Check for .25degC //bit_is_set(lm73_temp,10))
+    lm73_precision |= 0x01;
+
+  itoa(lm73_data, tempStr, 10);
+
+  strcat(tempStr, ".");
+
+  if(lm73_precision == 0x03)
+    strcat(tempStr, "75");
+  else if (lm73_precision == 0x02)
+    strcat(tempStr, "50");
+  else if (lm73_precision == 0x01)
+    strcat(tempStr, "25");
+  else
+    strcat(tempStr, "00");
+
+  strcpy(tempCelString, tempStr);
+}
+
+
 //Main function call
 int main()
 {
@@ -1055,6 +1106,7 @@ while(1){
   configureSPI();
   configureADC();
   uart_init();
+  init_twi();
   lcd_init();
   clear_display();
   sei();
@@ -1063,15 +1115,20 @@ while(1){
 
   uart_puts("[128 init]\n\r");
 
-  uint8_t  temp_counter = 1;
+  char tempString[20];
+
+  //itoa(lm73_data, tempString, 10);
+
+  //uart_puts(tempString);
+
+
   int16_t timeBuf = 0;
 //  char remoteTemp[6];
   remoteTemp[5] = '\0';
 
   int j, k;
 
-  uint16_t temp_adcResult = 0;
-  char lcd_str_l[16];
+//  uint16_t temp_adcResult = 0;
 
   string2lcd("Nick McComb     ");
   line2_col1();
@@ -1175,6 +1232,11 @@ DEBUG_HIGH();
     for(k = 0; k < 5; ++k)
       remoteTemp[k] = finalBuffer[k];
 
+    //Process the local temperature
+    lm73Read();
+//    itoa(lm73_data, tempString, 10);
+    uart_puts(tempCelString);
+    uart_puts("\n\r");
 //      uart_puts(remoteTemp);
 //      uart_puts("            ");
 
