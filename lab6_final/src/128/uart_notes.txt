@@ -1,0 +1,7 @@
+UART NOTES
+
+Originally I had jumpers in J9 and J7
+
+I removed J7 because I want to coopt the TX line for debugging
+
+The uC TX pin is the one closest to the programming port
