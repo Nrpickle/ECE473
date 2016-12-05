@@ -49,6 +49,7 @@ LED spinny blinky while looking for satellites
 #include "lm73_functions_skel.h"
 #include "twi_master.h"
 #include "hd44780.h"
+#include "si4734.h"
 
 //Program controls
 //#define LEADING_0  //Whether or not you want leading zeros
@@ -106,6 +107,7 @@ void configureIO( void );
 void configureTimers( void );
 void configureSPI( void );
 void configureADC( void );
+void configureRadio( void );
 void inline setSegment( uint16_t targetOutput );
 void inline clearSegment( void );
 void        processButtonPress( void );
@@ -215,17 +217,33 @@ char lcd_final[32];
 
 //Editing settings
 uint16_t volatile settings = 0;
-
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
-//Debugging
-#define DEBUG_PIN 0x02
+//Radio globals
+extern enum radio_band{FM, AM, SW};
+extern volatile uint8_t STC_interrupt;
 
-//#define DEBUG_HIGH() {PORTF |=  DEBUG_PIN;}
-//#define DEBUG_LOW()  {PORTF &= ~DEBUG_PIN;}
+volatile enum radio_band current_radio_band = FM;
+
+uint16_t eeprom_fm_freq;
+uint16_t eeprom_am_freq;
+uint16_t eeprom_sw_freq;
+uint8_t  eeprom_volume;
+
+uint16_t current_fm_freq = 10630;
+uint16_t current_am_freq;
+uint16_t current_sw_freq;
+uint8_t  current_volume;
+
+//Used in debug mode for UART1
+char uart1_tx_buf[40];      //holds string to send to crt
+char uart1_rx_buf[40];      //holds string that recieves data from uart
 
 
-//NOT USED
+
+
+
+
 //This was a function used by me to async update the LCD, however I ended up
 //using a modified version of the code that Traylor provided on his GitHub
 void inline processLCD(){
@@ -275,6 +293,15 @@ void configureIO( void ){
     output[i] = 0;
   }
 
+  //  Radio configuration
+  //PORTE bit 2 is active high reset for Radio
+  DDRE  |= 0x04;
+  PORTE |= 0x04; //Radio reset is on at powerup (active high)
+  //Enable interrupt for radio
+  EICRB |= (1<<ISC71) | (1<<ISC70);
+  EIMSK |= (1<<INT7);
+  
+
   //Enable encoders
 //  DDRE |= 0xC0;  //Enable Clk inhibit pin and async pin as outputs
   //Enable clk inhibit pin and async pin as outputs
@@ -286,6 +313,14 @@ void configureIO( void ){
 //  DDRF |=   DEBUG_PIN; //Enable PORTF PINX as a debug output
 //  DEBUG_LOW();  //Set the pin low to start
 }
+
+//******************************************************************************
+// External interrupt 7 is on Port E bit 7. The interrupt is triggered on the
+// rising edge of Port E bit 7.  The i/o clock must be running to detect the
+// edge (not asynchronouslly triggered)
+//******************************************************************************
+ISR(INT7_vect){STC_interrupt = TRUE;}
+/***********************************************************************/
 
 //Configures all timer/counters on the device
 void configureTimers( void ){
@@ -430,6 +465,22 @@ ISR(ADC_vect){
   lastADCread = ADC; 
 }
 
+
+//Setup the si4734 radio
+void configureRadio( void ){
+
+  //hardware reset of Si4734
+  PORTE &= ~(1<<PE7); //int2 initially low to sense TWI mode
+  DDRE  |= 0x80;      //turn on Port E bit 7 to drive it low
+  PORTE |=  (1<<PE2); //hardware reset Si4734 
+  _delay_us(200);     //hold for 200us, 100us by spec         
+  PORTE &= ~(1<<PE2); //release reset 
+  _delay_us(30);      //5us required because of my slow I2C translators I suspect
+  //Si code in "low" has 30us delay...no explaination
+  DDRE  &= ~(0x80);   //now Port E bit 7 becomes input from the radio interrupt
+
+
+}
 //Outputs the proper segment based on the input number
 //Note: This function only currently supports 0-9 (as alphas were not needed for the assignment)
 void inline setSegment( uint16_t targetOutput ){
@@ -830,7 +881,7 @@ void inline processAlarm( void ){
 
   //lcd_string_array[5] is blank
   if(!currentlyAlarming){
-    SET_VOLUME(0);
+    SET_VOLUME(70);
   }
   else {
     SET_VOLUME(ALARM_VOLUME);
@@ -1121,18 +1172,22 @@ while(1){
   configureADC();
   uart_init();
   init_twi();
+//  configureRadio(); //Must be after init_twi();
   lcd_init();
   clear_display();
+  configureRadio();
   sei();
+
+  fm_pwr_up(); //powerup the radio as appropriate
+  current_fm_freq = 10630; //arg2, arg3: 99.9Mhz, 200khz steps
+  fm_tune_freq(); //tune radio to frequency in current_fm_freq
 
   strcpy(finalBuffer, " ");
 
   uart_puts("[128 init]\n\r");
 
-  char tempString[20];
-
+  //char tempString[20];
   //itoa(lm73_data, tempString, 10);
-
   //uart_puts(tempString);
 
 

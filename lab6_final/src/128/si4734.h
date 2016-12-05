@@ -38,6 +38,7 @@
 
 extern volatile enum radio_band current_radio_band;
 
+
 extern uint16_t eeprom_fm_freq;
 extern uint16_t eeprom_am_freq;
 extern uint16_t eeprom_sw_freq;
