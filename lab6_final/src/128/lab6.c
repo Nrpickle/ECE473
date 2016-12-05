@@ -1053,22 +1053,13 @@ void processEncoders( void ){
   uint8_t static rEncoder = 0;
   uint8_t static debugBounce = 0; 
 
-//  if(lastEncoderValue == 255 & debugBounce = 0){
-
-//    debugBounce = 1;
-//  }
-//  else {
-//  lEncoderPrev = lEncoder;
-//  rEncoderPrev = rEncoder;
-
-
   bargraphOutput = lastEncoderValue;
 
+/*
   uart_putc(((lastEncoderValue /100) % 10) + 48);
   uart_putc((lastEncoderValue / 10) % 10 + 48);
   uart_putc((lastEncoderValue % 10) + 48);
-  //uart_putc('\n');
-  //uart_putc('\r');
+*/
 
   if(lastEncoderValue == 255 && debugBounce == 0){
     debugBounce = 1;
@@ -1101,10 +1092,10 @@ void processEncoders( void ){
   }
 
   }
-
+/*
   uart_putc('\n');
   uart_putc('\r');
-
+*/
 }
 
 //Called to increment the counter variable
@@ -1135,13 +1126,18 @@ void inline decrementCounter( void ){
 
 //Parsed commands from the encoders (parsed to one call per detent)
 void inline ENC_L_COUNTUP(void){
+  if(radioVolume < 100)
+    radioVolume += 10;
   //ENC_R_COUNTUP();
 }
 void inline ENC_L_COUNTDOWN(void){
+  if(radioVolume > 0)
+    radioVolume -= 10;
   //ENC_R_COUNTDOWN();
 }
 void inline ENC_R_COUNTUP(void){
-  
+
+/*
   if(settings & SET_MIN){
       minutes = (minutes + 1) % 60;
       seconds = 0;
@@ -1150,8 +1146,11 @@ void inline ENC_R_COUNTUP(void){
     hours = (hours + 1) % 24;
     seconds = 0;
   }
+*/
 }
 void inline ENC_R_COUNTDOWN(void){
+
+/*
   if(settings & SET_MIN){
     if(minutes == 0)
       minutes = 59;
@@ -1166,6 +1165,7 @@ void inline ENC_R_COUNTDOWN(void){
       hours -= 1;
     seconds = 0;
   }
+*/
 }
 
 ISR(USART0_RX_vect){
