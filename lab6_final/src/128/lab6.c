@@ -230,7 +230,7 @@ uint8_t currentlyRadio = 0;  //1 if the radio is "ON"
 void inline RADIO_ON(void)  {set_property(0x4000, 0x003F); currentlyRadio = TRUE;}
 void inline RADIO_OFF(void) {set_property(0x4000, 0x0000); currentlyRadio = FALSE;}
 
-uint8_t radioVolume = 50;  //Current desired volume from 0% to 100%, default to half
+uint8_t radioVolume = 60;  //Current desired volume from 0% to 100%, default to half
 
 uint16_t eeprom_fm_freq;
 uint16_t eeprom_am_freq;
@@ -673,12 +673,27 @@ void processButtonPress( void ){
       else
         settings ^= ALARM_ARMED;  //Otherwise, toggle alarm
       break;
-    case 0x20: //Set military time button
+    case 0x20: //Set military time button or turn on radio
+      if((settings & SET_HR) || (settings & SET_MIN)){  //If we are changing the time, then change 12/24 hr modes
+        settings ^= TIME24;
+        if(settings & TIME24)
+          upperDot = TRUE;
+        else
+          upperDot = FALSE;
+      } //Otherwise, turn on the radio
+      else {
+        if(currentlyRadio)
+          RADIO_OFF();
+        else
+          RADIO_ON();  
+      }
+      /*
       settings ^= TIME24;
       if(settings & TIME24)
         upperDot = TRUE;
       else
         upperDot = FALSE;
+      */
       break;
     case 0x40: //Toggle Set minutes
       settings ^= SET_MIN;
