@@ -53,7 +53,7 @@ LED spinny blinky while looking for satellites
 
 //Program controls
 //#define LEADING_0  //Whether or not you want leading zeros
-#define USE_GPS_TIME   //Whether or not you want to use GPS Time (if available)
+//#define USE_GPS_TIME   //Whether or not you want to use GPS Time (if available)
 
 
 //Segment pin definitions
@@ -237,7 +237,7 @@ uint16_t eeprom_am_freq;
 uint16_t eeprom_sw_freq;
 uint8_t  eeprom_volume;
 
-uint16_t current_fm_freq = 10630;
+uint16_t current_fm_freq = 9910; //10630; //9910 // 10630;
 uint16_t current_am_freq;
 uint16_t current_sw_freq;
 uint8_t  current_volume;
@@ -1051,7 +1051,33 @@ void processEncoders( void ){
   uint8_t static rEncoderPrev = 0;
   uint8_t static lEncoder = 0;
   uint8_t static rEncoder = 0;
+  uint8_t static debugBounce = 0; 
+
+//  if(lastEncoderValue == 255 & debugBounce = 0){
+
+//    debugBounce = 1;
+//  }
+//  else {
+//  lEncoderPrev = lEncoder;
+//  rEncoderPrev = rEncoder;
+
+
+  bargraphOutput = lastEncoderValue;
+
+  uart_putc(((lastEncoderValue /100) % 10) + 48);
+  uart_putc((lastEncoderValue / 10) % 10 + 48);
+  uart_putc((lastEncoderValue % 10) + 48);
+  //uart_putc('\n');
+  //uart_putc('\r');
+
+  if(lastEncoderValue == 255 && debugBounce == 0){
+    debugBounce = 1;
+    uart_putc('|');
+  }
+  else{
+    debugBounce = 0;
   
+
   lEncoderPrev = lEncoder;
   rEncoderPrev = rEncoder;
 
@@ -1074,7 +1100,11 @@ void processEncoders( void ){
       ENC_R_COUNTDOWN();
   }
 
-  
+  }
+
+  uart_putc('\n');
+  uart_putc('\r');
+
 }
 
 //Called to increment the counter variable
@@ -1234,8 +1264,8 @@ while(1){
   //itoa(lm73_data, tempString, 10);
   //uart_puts(tempString);
 
-  //Bargrapph Test
-  bargraphOutput = 0x55;
+  //Bargraph Test
+  //bargraphOutput = 0x55;
 
   int16_t timeBuf = 0;
 //  char remoteTemp[6];
