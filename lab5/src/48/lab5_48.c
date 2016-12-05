@@ -169,7 +169,7 @@ int main(){
     strcat(outputString, timeStr);
     strcat(outputString, "\n");
 
-    uart_puts(outputString);
+    uart_puts(outputString (char*));
     //Only use the following line for computer terminal usage!
     //uart_puts("\r");
 
