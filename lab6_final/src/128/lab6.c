@@ -184,7 +184,7 @@ uint8_t volatile global_targetDigit = 0;
 
 //time management
 uint8_t  seconds = 0;
-uint8_t  minutes = 0;
+uint8_t  minutes = 30;
 uint8_t  hours   = 0;  //TODO change start time
 
 //alarm management (alarm is in 24 hours)
@@ -220,10 +220,17 @@ uint16_t volatile settings = 0;
 enum settings_t {SET_MIN = 0x01, SET_HR = 0x02, TIME24 = 0x04, ALARM_ARMED = 0x08};
 
 //Radio globals
+
 extern enum radio_band{FM, AM, SW};
 extern volatile uint8_t STC_interrupt;
 
 volatile enum radio_band current_radio_band = FM;
+
+uint8_t currentlyRadio = 0;  //1 if the radio is "ON"
+void inline RADIO_ON(void)  {set_property(0x4000, 0x003F); currentlyRadio = TRUE;}
+void inline RADIO_OFF(void) {set_property(0x4000, 0x0000); currentlyRadio = FALSE;}
+
+uint8_t radioVolume = 50;  //Current desired volume from 0% to 100%, default to half
 
 uint16_t eeprom_fm_freq;
 uint16_t eeprom_am_freq;
@@ -436,8 +443,9 @@ ISR(TIMER0_OVF_vect){
 
 //Audio generation interrupt
 ISR(TIMER1_COMPA_vect){
-   //Toggle audio output bit
-   PORTD ^= AUDIO_OUT; 
+   //Toggle audio output bit (only if the alarm is happening)
+   if(currentlyAlarming)
+     PORTD ^= AUDIO_OUT; 
 }
 
 //Setup SPI on the interface
@@ -658,7 +666,12 @@ void processButtonPress( void ){
       }
       break;
     case 0x10: //Arm alarm button
-      settings ^= ALARM_ARMED;
+      if(currentlyAlarming){      //Kills the alarm if currently alarming
+        currentlyAlarming = 0;
+	snoozeCount = 0;          //We also want to get rid of any snooze
+      }
+      else
+        settings ^= ALARM_ARMED;  //Otherwise, toggle alarm
       break;
     case 0x20: //Set military time button
       settings ^= TIME24;
@@ -879,12 +892,11 @@ void inline processAlarm( void ){
       lcd_string_array[i + 27] = remoteTemp[i];
   }
 
-  //lcd_string_array[5] is blank
   if(!currentlyAlarming){
-    SET_VOLUME(70);
+//    SET_VOLUME(60);
   }
   else {
-    SET_VOLUME(ALARM_VOLUME);
+//    SET_VOLUME(ALARM_VOLUME);
     SET_HZ(music[musicCounter]);
   }
   
@@ -928,6 +940,20 @@ void inline processOutputBrightness( void ){
   //setLEDBrightness(MIN_BRT);
   //setLEDBrightness(230);
   //setLEDBrightness(0xFF - (150  * .227 + 27));
+}
+
+//Determine what volume we want to output
+void inline processVolume( void ){
+
+  if(currentlyAlarming){
+    SET_VOLUME(80);//ALARM_VOLUME);
+  }
+  else if(currentlyRadio){
+    SET_VOLUME(radioVolume);
+  }
+  else{
+    SET_VOLUME(0x00);
+  }
 
 }
 
@@ -1182,6 +1208,9 @@ while(1){
   current_fm_freq = 10630; //arg2, arg3: 99.9Mhz, 200khz steps
   fm_tune_freq(); //tune radio to frequency in current_fm_freq
 
+  RADIO_OFF();       //Start the radio as "off"
+
+
   strcpy(finalBuffer, " ");
 
   uart_puts("[128 init]\n\r");
@@ -1190,6 +1219,8 @@ while(1){
   //itoa(lm73_data, tempString, 10);
   //uart_puts(tempString);
 
+  //Bargrapph Test
+  bargraphOutput = 0x55;
 
   int16_t timeBuf = 0;
 //  char remoteTemp[6];
@@ -1256,6 +1287,7 @@ while(1){
 
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
+    processVolume();         //Outputs the volume we want
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
