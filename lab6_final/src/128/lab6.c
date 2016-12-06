@@ -235,6 +235,9 @@ uint8_t radioVolume = 60;  //Current desired volume from 0% to 100%, default to 
 uint8_t radioOutputTimer = 0;
 #define RADIO_OUTPUT_DELAY 5 //seconds
 
+
+extern uint8_t si4734_tune_status_buf[8];
+
 uint16_t eeprom_fm_freq;
 uint16_t eeprom_am_freq;
 uint16_t eeprom_sw_freq;
@@ -1010,6 +1013,8 @@ void inline processVolume( void ){
 }
 
 void inline processRadioTune(){
+//  fm_rsq_status();
+
   if(desired_fm_freq != current_fm_freq){
     current_fm_freq = desired_fm_freq;
     fm_tune_freq();
@@ -1097,7 +1102,7 @@ void processEncoders( void ){
   uint8_t static rEncoder = 0;
   uint8_t static debugBounce = 0; 
 
-  bargraphOutput = lastEncoderValue;
+  //bargraphOutput = lastEncoderValue;
 
 /*
   uart_putc(((lastEncoderValue /100) % 10) + 48);
@@ -1359,10 +1364,12 @@ while(1){
       }
     }
 
+//    fm_rsq_status();
+    processRadioTune();
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
     processVolume();         //Outputs the volume we want
-    processRadioTune();      //Tunes the radio if necessary
+//    processRadioTune();      //Tunes the radio if necessary
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
@@ -1412,6 +1419,9 @@ while(1){
       if(finalBuffer[6] == ' ') {
         //uart_puts("No time info found...\r\n");
       }
+      while(twi_busy()){}
+      fm_rsq_status();
+      bargraphOutput = si4734_tune_status_buf[4];
     }
 
     //Process the remote temperature

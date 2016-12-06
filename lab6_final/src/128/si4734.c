@@ -222,6 +222,9 @@ switch(current_radio_band){
 //
 void fm_rsq_status(){
 
+  while( ! STC_interrupt ){}; //spin until the tune command finishes 
+
+
     si4734_wr_buf[0] = FM_RSQ_STATUS;            //fm_rsq_status command
     si4734_wr_buf[1] = FM_RSQ_STATUS_IN_INTACK;  //clear STCINT bit if set
     twi_start_wr(SI4734_ADDRESS, si4734_wr_buf, 2);
