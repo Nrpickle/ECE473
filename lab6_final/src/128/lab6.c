@@ -53,7 +53,7 @@ LED spinny blinky while looking for satellites
 
 //Program controls
 //#define LEADING_0  //Whether or not you want leading zeros
-//#define USE_GPS_TIME   //Whether or not you want to use GPS Time (if available)
+#define USE_GPS_TIME   //Whether or not you want to use GPS Time (if available)
 
 
 //Segment pin definitions
@@ -232,12 +232,16 @@ void inline RADIO_OFF(void) {set_property(0x4000, 0x0000); currentlyRadio = FALS
 
 uint8_t radioVolume = 60;  //Current desired volume from 0% to 100%, default to half
 
+uint8_t radioOutputTimer = 0;
+#define RADIO_OUTPUT_DELAY 5 //seconds
+
 uint16_t eeprom_fm_freq;
 uint16_t eeprom_am_freq;
 uint16_t eeprom_sw_freq;
 uint8_t  eeprom_volume;
 
-uint16_t current_fm_freq = 9910; //10630; //9910 // 10630;
+uint16_t desired_fm_freq = 10630;  //The system requests an updated frequency by changing this variable
+uint16_t current_fm_freq = 10630; //10630; //9910 // 10630;
 uint16_t current_am_freq;
 uint16_t current_sw_freq;
 uint8_t  current_volume;
@@ -405,6 +409,10 @@ ISR(TIMER0_OVF_vect){
       ++snoozeCount;
     }
 
+    if(radioOutputTimer){  //is n/e 0
+      radioOutputTimer -= 1;
+    }
+
   }
  //Exectued 128Hz
   if (secondsCounter % 1 == 0){
@@ -546,6 +554,9 @@ void setDigit( uint8_t targetDigit ){
   _delay_us(5);
   NOP();
   NOP();
+
+  if(!radioOutputTimer){ //Last-minute hack to totally change what the LED outputs
+
   switch(targetDigit){
 
     case 0: //colon control
@@ -618,6 +629,32 @@ void setDigit( uint8_t targetDigit ){
       if(dot[4])
         PORTA = PORTA & ~(SEG_DP);
       break;
+  }
+  }//end !radioOutputTimer
+  else {//we want to output the radio tuning information
+    
+    switch(targetDigit){
+      case 1:
+        SET_DIGIT_ONE();
+        if(current_fm_freq > 9999){ //Then we want to output a 1
+          setSegment(1);
+	}
+        break;
+      case 2:
+        SET_DIGIT_TWO();
+	setSegment((current_fm_freq / 1000) % 10);
+        break;
+      case 3:
+        SET_DIGIT_THREE();
+	setSegment((current_fm_freq / 100) % 10);
+	//Set the digit point
+	PORTA = PORTA & ~(SEG_DP);
+        break;
+      case 4:
+        SET_DIGIT_FOUR();
+	setSegment((current_fm_freq / 10) % 10);
+        break;
+    }
   }
 }
 
@@ -972,6 +1009,13 @@ void inline processVolume( void ){
 
 }
 
+void inline processRadioTune(){
+  if(desired_fm_freq != current_fm_freq){
+    current_fm_freq = desired_fm_freq;
+    fm_tune_freq();
+  }
+
+}
 
 //Checks the buttons when called, and calls a seperate processing function once the buttons have been debounced
 //It will call it only once per button press, and resets upon button release.
@@ -1136,7 +1180,11 @@ void inline ENC_L_COUNTDOWN(void){
   //ENC_R_COUNTDOWN();
 }
 void inline ENC_R_COUNTUP(void){
+  radioOutputTimer = RADIO_OUTPUT_DELAY;
 
+  if(desired_fm_freq < 10780){
+    desired_fm_freq += 20;
+  }
 /*
   if(settings & SET_MIN){
       minutes = (minutes + 1) % 60;
@@ -1149,7 +1197,11 @@ void inline ENC_R_COUNTUP(void){
 */
 }
 void inline ENC_R_COUNTDOWN(void){
+  radioOutputTimer = RADIO_OUTPUT_DELAY;
 
+  if(desired_fm_freq > 8800){
+    desired_fm_freq -= 20;
+  }
 /*
   if(settings & SET_MIN){
     if(minutes == 0)
@@ -1243,37 +1295,25 @@ while(1){
   configureADC();
   uart_init();
   init_twi();
-//  configureRadio(); //Must be after init_twi();
   lcd_init();
   clear_display();
-  configureRadio();
+  configureRadio();   //Must be after init_twi();
   sei();
 
   fm_pwr_up(); //powerup the radio as appropriate
-  current_fm_freq = 10630; //arg2, arg3: 99.9Mhz, 200khz steps
+  desired_fm_freq = current_fm_freq = 10630; //arg2, arg3: 99.9Mhz, 200khz steps
   fm_tune_freq(); //tune radio to frequency in current_fm_freq
 
   RADIO_OFF();       //Start the radio as "off"
-
 
   strcpy(finalBuffer, " ");
 
   uart_puts("[128 init]\n\r");
 
-  //char tempString[20];
-  //itoa(lm73_data, tempString, 10);
-  //uart_puts(tempString);
-
-  //Bargraph Test
-  //bargraphOutput = 0x55;
-
   int16_t timeBuf = 0;
-//  char remoteTemp[6];
   remoteTemp[5] = '\0';
 
   int j, k;
-
-//  uint16_t temp_adcResult = 0;
 
   string2lcd("Nick McComb     ");
   line2_col1();
@@ -1285,20 +1325,9 @@ while(1){
   strcpy(lcd_string_array, "                                ");
 
   strcpy(lcd_string_array, "Nick McComb      ECE473          ");
-//  strcpy(lcd_string_array, "Hello, friend :)|123456789");
-//uint8_t counter = 0;
 
   _delay_us(300);
 
-/*
-  uint8_t z = 0;
-  for(z = 0; z < 45; z++){
-    refresh_lcd(lcd_string_array);
-    _delay_us(50);
-  }
-
-  updateSPI();
-*/ 
   ENABLE_LED_CONTROL();
 
   setLEDBrightness(0x10);
@@ -1333,6 +1362,7 @@ while(1){
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
     processVolume();         //Outputs the volume we want
+    processRadioTune();      //Tunes the radio if necessary
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
