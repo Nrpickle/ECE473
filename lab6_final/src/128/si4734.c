@@ -72,6 +72,10 @@ uint8_t get_int_status(){
 //
 
 void fm_tune_freq(){
+  
+  while( ! STC_interrupt ){}; //spin until the tune command finishes 
+
+
   si4734_wr_buf[0] = 0x20;  //fm tune command
   si4734_wr_buf[1] = 0x00;  //no FREEZE and no FAST tune
   si4734_wr_buf[2] = (uint8_t)(current_fm_freq >> 8); //freq high byte
@@ -80,7 +84,7 @@ void fm_tune_freq(){
   //send fm tune command
   STC_interrupt = FALSE;
   twi_start_wr(SI4734_ADDRESS, si4734_wr_buf, 5);
-  while( ! STC_interrupt ){}; //spin until the tune command finishes 
+//  while( ! STC_interrupt ){}; //spin until the tune command finishes 
 }
 //********************************************************************************
 
@@ -291,6 +295,9 @@ void am_rsq_status(){
 //command is guarnteed by design to finish in 10ms. 
 //
 void set_property(uint16_t property, uint16_t property_value){
+  
+  while( ! STC_interrupt ){}; //spin until the tune command finishes 
+
 
     si4734_wr_buf[0] = SET_PROPERTY;                   //set property command
     si4734_wr_buf[1] = 0x00;                           //all zeros
