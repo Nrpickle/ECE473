@@ -233,7 +233,7 @@ void inline RADIO_OFF(void) {set_property(0x4000, 0x0000); currentlyRadio = FALS
 uint8_t radioVolume = 60;  //Current desired volume from 0% to 100%, default to half
 
 uint8_t radioOutputTimer = 0;
-#define RADIO_OUTPUT_DELAY 5 //seconds
+#define RADIO_OUTPUT_DELAY 3 //seconds
 
 
 extern uint8_t si4734_tune_status_buf[8];
@@ -639,23 +639,23 @@ void setDigit( uint8_t targetDigit ){
     switch(targetDigit){
       case 1:
         SET_DIGIT_ONE();
-        if(current_fm_freq > 9999){ //Then we want to output a 1
+        if(desired_fm_freq > 9999){ //Then we want to output a 1
           setSegment(1);
 	}
         break;
       case 2:
         SET_DIGIT_TWO();
-	setSegment((current_fm_freq / 1000) % 10);
+	setSegment((desired_fm_freq / 1000) % 10);
         break;
       case 3:
         SET_DIGIT_THREE();
-	setSegment((current_fm_freq / 100) % 10);
+	setSegment((desired_fm_freq / 100) % 10);
 	//Set the digit point
 	PORTA = PORTA & ~(SEG_DP);
         break;
       case 4:
         SET_DIGIT_FOUR();
-	setSegment((current_fm_freq / 10) % 10);
+	setSegment((desired_fm_freq / 10) % 10);
         break;
     }
   }
@@ -1008,6 +1008,19 @@ void inline processVolume( void ){
   }
   else{
     SET_VOLUME(0x00);
+  }i
+
+  //Sets the bar graph output according to the volume
+  //NOTE: The lower two volume bars don't show up on the bar graph
+  //because it's 8 digits and didn't feel like doing any more math ¯\_(ツ)_/¯
+  if(radioVolume <= 20){
+    bargraphOutput = 0;
+  }
+  else if (radioVolume == 30){
+    bargraphOutput = 1;
+  }
+  else{
+    bargraphOutput = pow(2, (radioVolume-20) / 10);
   }
 
 }
@@ -1015,7 +1028,7 @@ void inline processVolume( void ){
 void inline processRadioTune(){
 //  fm_rsq_status();
 
-  if(desired_fm_freq != current_fm_freq){
+  if((desired_fm_freq != current_fm_freq) && !radioOutputTimer ){
     current_fm_freq = desired_fm_freq;
     fm_tune_freq();
   }
@@ -1362,14 +1375,19 @@ while(1){
 //	_delay_us(5);
 	NOP();
       }
+      if(k == 2){
+        //while(twi_busy()){}
+        //fm_rsq_status();
+        //bargraphOutput = si4734_tune_status_buf[4];
+      }
     }
 
 //    fm_rsq_status();
-    processRadioTune();
+    //processRadioTune();
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
     processVolume();         //Outputs the volume we want
-//    processRadioTune();      //Tunes the radio if necessary
+    processRadioTune();      //Tunes the radio if necessary
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
@@ -1419,9 +1437,9 @@ while(1){
       if(finalBuffer[6] == ' ') {
         //uart_puts("No time info found...\r\n");
       }
-      while(twi_busy()){}
-      fm_rsq_status();
-      bargraphOutput = si4734_tune_status_buf[4];
+      //while(twi_busy()){}
+      //fm_rsq_status();
+      //bargraphOutput = si4734_tune_status_buf[4];
     }
 
     //Process the remote temperature
