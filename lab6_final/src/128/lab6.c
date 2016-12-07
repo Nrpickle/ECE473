@@ -961,10 +961,8 @@ void inline processAlarm( void ){
   
   if(currentlyAlarming){
     if(alarmMode == BEEP){ //Then we want to beep
-      //SET_HZ(musicCounter);
+      SET_HZ(music[musicCounter]);
       lcd_string_array[0] = musicCounter + 48;
-      SET_HZ(440); //TODO: FIX THIS BUG!!
-//      SET_HZ(musicCounter);
     }
     else if(alarmMode == RADIO){
       if(!currentlyRadio) //If the radio isn't already on, turn it on
