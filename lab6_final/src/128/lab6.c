@@ -178,6 +178,8 @@ uint16_t musicCounter = 0;
 #define NUM_MUSIC_NOTES 15
 //Supposed to be the super mario theme... credit: www.mikrotik.com/wiki/Super_Mario_Theme
 uint16_t music[25] = {660, 660, 660, 510, 660, 770, 380, 510, 380, 320, 440, 480, 450, 430, 380, 660, 760, 860, 700, 760, 660, 520, 580, 480};
+uint8_t volumeOutputTimer = 0;  //Choses when to display volume on the bar graph
+#define VOLUME_OUTPUT_DELAY 3 //seconds
 
 //LED Mangement
 uint8_t volatile global_targetDigit = 0;
@@ -192,7 +194,10 @@ uint8_t  alarmMinutes = 20;
 uint8_t  alarmHours   = 0;
 uint8_t  currentlyAlarming = 0;
 uint16_t snoozeCount = 0;
-#define SNOOZE_SECONDS 10
+#define SNOOZE_SECONDS 10 //60*10 //10 minutes
+enum alarmMode_t {BEEP, RADIO};
+uint8_t  alarmMode = BEEP; //Set default alarm mode to beep
+
 
 
 //Digit points
@@ -250,13 +255,8 @@ uint16_t current_sw_freq;
 uint8_t  current_volume;
 
 //Used in debug mode for UART1
-char uart1_tx_buf[40];      //holds string to send to crt
-char uart1_rx_buf[40];      //holds string that recieves data from uart
-
-
-
-
-
+//char uart1_tx_buf[40];      //holds string to send to crt
+//char uart1_rx_buf[40];      //holds string that recieves data from uart
 
 //This was a function used by me to async update the LCD, however I ended up
 //using a modified version of the code that Traylor provided on his GitHub
@@ -415,6 +415,9 @@ ISR(TIMER0_OVF_vect){
     if(radioOutputTimer){  //is n/e 0
       radioOutputTimer -= 1;
     }
+    if(volumeOutputTimer){
+      volumeOutputTimer -= 1;
+    }
 
   }
  //Exectued 128Hz
@@ -444,6 +447,7 @@ ISR(TIMER0_OVF_vect){
     ++musicCounter;
 
     if(musicCounter >= NUM_MUSIC_NOTES)
+//    if(musicCounter > 2)
       musicCounter = 0;
   }
 
@@ -454,8 +458,8 @@ ISR(TIMER0_OVF_vect){
 
 //Audio generation interrupt
 ISR(TIMER1_COMPA_vect){
-   //Toggle audio output bit (only if the alarm is happening)
-   if(currentlyAlarming)
+   //Toggle audio output bit (only if the alarm is happening, and we are in beep mode)
+   if(currentlyAlarming && alarmMode == BEEP)
      PORTD ^= AUDIO_OUT; 
 }
 
@@ -694,9 +698,13 @@ void processButtonPress( void ){
           alarmHours = 0;
       }
       break;
-    case 0x04: //Kill alarm
-      currentlyAlarming = 0;
-      snoozeCount = 0;      //We also want to get rid of snooze
+    case 0x04: //Switch alarm mode
+      if(settings & ALARM_ARMED){
+        if(alarmMode == BEEP)
+	  alarmMode = RADIO;
+	else if(alarmMode == RADIO)
+	  alarmMode = BEEP;
+      }
       break;
     case 0x08: //Snooze alarm
       if(currentlyAlarming){
@@ -709,6 +717,8 @@ void processButtonPress( void ){
       if(currentlyAlarming){      //Kills the alarm if currently alarming
         currentlyAlarming = 0;
 	snoozeCount = 0;          //We also want to get rid of any snooze
+	//if(currentlyRadio)
+	  //RADIO_OFF();
       }
       else
         settings ^= ALARM_ARMED;  //Otherwise, toggle alarm
@@ -817,7 +827,7 @@ void inline processAlarm( void ){
   }
 
 
-  //Detecting Alarm output
+  //Detecting Alarm to determine what to output on the LCD
   if(currentlyAlarming){
     uint8_t k;
     for(k = 0; k < 16; ++k)
@@ -914,22 +924,22 @@ void inline processAlarm( void ){
     //Clean up the second line
     for(p = 16; p < 32; ++p)
       lcd_string_array[p] = ' ';
+
+    //Output what mode we are in
+    if(alarmMode == BEEP)
+      memcpy(lcd_string_array +16, "Beep mode set", 13);
+    else if(alarmMode == RADIO)
+      memcpy(lcd_string_array +16, "Radio mode set", 14);
   }
   else{  //The alarm isn't armed, so we want to output that fact
     dot[4] = 0;
-    lcd_string_array[0] = 'n';
-    lcd_string_array[1] = 'o';
-    lcd_string_array[2] = ' ';
-    lcd_string_array[3] = 'a';
-    lcd_string_array[4] = 'l';
-    lcd_string_array[5] = 'a';
-    lcd_string_array[6] = 'r';
-    lcd_string_array[7] = 'm';
+
+    memcpy(lcd_string_array, "no alarm set", 12);
 
     uint8_t i;
  
-    for(i = 0; i < 20; ++i)
-      lcd_string_array[i+8] = ' ';
+    for(i = 0; i < 16; ++i)
+      lcd_string_array[i+12] = ' ';
 
     //Temperature planning
     //2nd row begins at 16
@@ -947,6 +957,22 @@ void inline processAlarm( void ){
       lcd_string_array[i + 27] = remoteTemp[i];
   }
 
+  //Detecting alarm to determine what to output through the speaker
+  
+  if(currentlyAlarming){
+    if(alarmMode == BEEP){ //Then we want to beep
+      //SET_HZ(musicCounter);
+      lcd_string_array[0] = musicCounter + 48;
+      SET_HZ(440); //TODO: FIX THIS BUG!!
+//      SET_HZ(musicCounter);
+    }
+    else if(alarmMode == RADIO){
+      if(!currentlyRadio) //If the radio isn't already on, turn it on
+        RADIO_ON();
+    }
+  } 
+
+/*
   if(!currentlyAlarming){
 //    SET_VOLUME(60);
   }
@@ -954,7 +980,7 @@ void inline processAlarm( void ){
 //    SET_VOLUME(ALARM_VOLUME);
     SET_HZ(music[musicCounter]);
   }
-  
+*/  
   #ifdef DEBUG_LIGHT_SENSE_ADC
     //ADC testing code
     lcd_string_array[29] = (lastADCread / 100) + 48;
@@ -1008,11 +1034,12 @@ void inline processVolume( void ){
   }
   else{
     SET_VOLUME(0x00);
-  }i
+  }
 
   //Sets the bar graph output according to the volume
   //NOTE: The lower two volume bars don't show up on the bar graph
   //because it's 8 digits and didn't feel like doing any more math ¯\_(ツ)_/¯
+  if(volumeOutputTimer){
   if(radioVolume <= 20){
     bargraphOutput = 0;
   }
@@ -1022,15 +1049,35 @@ void inline processVolume( void ){
   else{
     bargraphOutput = pow(2, (radioVolume-20) / 10);
   }
+  }
 
 }
 
+
+//This function process the radio tune, as well as the RSSI information
+//It only finalizes the tune (and executes) when the user has made their
+//selection (the radioOutputTimer has decreased to 0, meaning they haven't
+//moved the knob in X seconds.
+//The function also only reads RSSI when the radio is not being updated
+//(to prevent long delays)
+//The function also only outputs a 0 when the station is being changed
+//Also, RSSI is only outputted when the RADIO is on (duh)
 void inline processRadioTune(){
-//  fm_rsq_status();
 
   if((desired_fm_freq != current_fm_freq) && !radioOutputTimer ){
     current_fm_freq = desired_fm_freq;
     fm_tune_freq();
+  }
+  else if (!radioOutputTimer && currentlyRadio && !volumeOutputTimer){
+    while(twi_busy()){}
+    fm_rsq_status();
+    bargraphOutput = si4734_tune_status_buf[4];
+  }
+  else if(radioOutputTimer || (desired_fm_freq != current_fm_freq)){
+    bargraphOutput = 0;
+  }
+  else {
+    bargraphOutput = 0;
   }
 
 }
@@ -1188,11 +1235,13 @@ void inline decrementCounter( void ){
 
 //Parsed commands from the encoders (parsed to one call per detent)
 void inline ENC_L_COUNTUP(void){
+  volumeOutputTimer = VOLUME_OUTPUT_DELAY;
   if(radioVolume < 100)
     radioVolume += 10;
   //ENC_R_COUNTUP();
 }
 void inline ENC_L_COUNTDOWN(void){
+  volumeOutputTimer = VOLUME_OUTPUT_DELAY;
   if(radioVolume > 0)
     radioVolume -= 10;
   //ENC_R_COUNTDOWN();
@@ -1386,8 +1435,9 @@ while(1){
     //processRadioTune();
     processCounterOutput();  //Doesn't have to happen all of the time, so it's called here.
     processAlarm();          //This processes the alarm outputs (incl the LCD)
-    processVolume();         //Outputs the volume we want
+//    processVolume();         //Outputs the volume we want
     processRadioTune();      //Tunes the radio if necessary
+    processVolume();         //Outputs the volume we want (NOTE: has to be after radio tune)
 
     //Refresh the LCD and when the string has been outputted, copy the queued string into
     //the string to be outputted. This prevents weird artifacts from appearing on the screen.
