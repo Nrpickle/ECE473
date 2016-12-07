@@ -238,6 +238,7 @@ void inline RADIO_OFF(void) {set_property(0x4000, 0x0000); currentlyRadio = FALS
 uint8_t radioVolume = 60;  //Current desired volume from 0% to 100%, default to half
 
 uint8_t radioOutputTimer = 0;
+//How long the radio station overrides the time on the display
 #define RADIO_OUTPUT_DELAY 3 //seconds
 
 
@@ -734,10 +735,14 @@ void processButtonPress( void ){
           upperDot = FALSE;
       } //Otherwise, turn on the radio
       else {
-        if(currentlyRadio)
+        if(currentlyRadio){
           RADIO_OFF();
-        else
+	  radioOutputTimer = 0;
+	}
+        else {
           RADIO_ON();  
+	  radioOutputTimer = RADIO_OUTPUT_DELAY;
+	}
       }
       /*
       settings ^= TIME24;
