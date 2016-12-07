@@ -711,14 +711,16 @@ void processButtonPress( void ){
         currentlyAlarming = 0; //Kill the alarm
         settings &= ~(ALARM_ARMED); //Disarm the alarm
         snoozeCount = 1;       //This starts the snooze counter
+	if(currentlyRadio)
+	  RADIO_OFF();
       }
       break;
     case 0x10: //Arm alarm button
+      snoozeCount = 0;            //Gets rid of any possible snooze 
       if(currentlyAlarming){      //Kills the alarm if currently alarming
         currentlyAlarming = 0;
-	snoozeCount = 0;          //We also want to get rid of any snooze
-	//if(currentlyRadio)
-	  //RADIO_OFF();
+	if(currentlyRadio)
+	  RADIO_OFF();
       }
       else
         settings ^= ALARM_ARMED;  //Otherwise, toggle alarm
@@ -832,6 +834,9 @@ void inline processAlarm( void ){
     uint8_t k;
     for(k = 0; k < 16; ++k)
       lcd_string_array[k] = ' ';
+
+    memcpy(lcd_string_array + 16, "                ", 16);
+    
     lcd_string_array[17] = 'W';
     lcd_string_array[18] = 'A';
     lcd_string_array[19] = 'K';
@@ -848,6 +853,8 @@ void inline processAlarm( void ){
     uint8_t k;
     for(k = 0; k < 16; ++k)
       lcd_string_array[k] = ' ';
+     
+    memcpy(lcd_string_array + 16, "                ", 16);
 
     lcd_string_array[17] = 'Z';
     lcd_string_array[18] = 'z';
@@ -961,8 +968,7 @@ void inline processAlarm( void ){
   
   if(currentlyAlarming){
     if(alarmMode == BEEP){ //Then we want to beep
-      SET_HZ(music[musicCounter]);
-      lcd_string_array[0] = musicCounter + 48;
+      SET_HZ(music[musicCounter]);  //This beeps out the song that is playing
     }
     else if(alarmMode == RADIO){
       if(!currentlyRadio) //If the radio isn't already on, turn it on
