@@ -47,7 +47,7 @@ AnnotateScope=All
 AnnotateOrder=2
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
+ClassGenCCAutoEnabled=0
 ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
@@ -64,7 +64,7 @@ AnnotateScope=All
 AnnotateOrder=1
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
+ClassGenCCAutoEnabled=0
 ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
@@ -81,7 +81,7 @@ AnnotateScope=All
 AnnotateOrder=0
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
+ClassGenCCAutoEnabled=0
 ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
@@ -98,7 +98,7 @@ AnnotateScope=All
 AnnotateOrder=3
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
+ClassGenCCAutoEnabled=0
 ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
@@ -149,7 +149,7 @@ AnnotateScope=All
 AnnotateOrder=5
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
-ClassGenCCAutoEnabled=1
+ClassGenCCAutoEnabled=0
 ClassGenCCAutoRoomEnabled=1
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
@@ -206,6 +206,44 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
 DocumentUniqueId=
+
+[Document11]
+DocumentPath=alarmClock.PcbDoc
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=QKTTPMPJ
+
+[Document12]
+DocumentPath=lab2.PcbLib
+AnnotationEnabled=1
+AnnotateStartValue=1
+AnnotationIndexControlEnabled=0
+AnnotateSuffix=
+AnnotateScope=All
+AnnotateOrder=-1
+DoLibraryUpdate=1
+DoDatabaseUpdate=1
+ClassGenCCAutoEnabled=1
+ClassGenCCAutoRoomEnabled=1
+ClassGenNCAutoScope=None
+DItemRevisionGUID=
+GenerateClassCluster=0
+DocumentUniqueId=MKBORQYC
+
+[GeneratedDocument1]
+DocumentPath=alarmClock 2-10-2017 11-28-15 PM.WAS
+DItemRevisionGUID=
 
 [Configuration1]
 Name=Default Configuration
@@ -365,6 +403,11 @@ OutputName21=WireList Netlist
 OutputDocumentPath21=
 OutputVariantName21=
 OutputDefault21=0
+OutputType22=WBSENetlistGeneration
+OutputName22=WEBENCH Simulation Engine
+OutputDocumentPath22=
+OutputVariantName22=
+OutputDefault22=0
 
 [OutputGroup2]
 Name=Simulator Outputs
@@ -376,6 +419,11 @@ OutputName1=Mixed Sim
 OutputDocumentPath1=
 OutputVariantName1=
 OutputDefault1=0
+OutputType2=WBSENetlist
+OutputName2=WEBENCH Simulation Engine
+OutputDocumentPath2=
+OutputVariantName2=
+OutputDefault2=0
 
 [OutputGroup3]
 Name=Documentation Outputs
@@ -855,6 +903,46 @@ OutputName9=Specctra Design PCB
 OutputDocumentPath9=
 OutputVariantName9=
 OutputDefault9=0
+OutputType10=Ansoft Neutral
+OutputName10=Ansoft Neutral (AutoPCB)
+OutputDocumentPath10=
+OutputVariantName10=
+OutputDefault10=0
+OutputType11=HyperLynx
+OutputName11=HyperLynx (AutoPCB)
+OutputDocumentPath11=
+OutputVariantName11=
+OutputDefault11=0
+OutputType12=Orcad SDT Schematic
+OutputName12=Orcad SDT Schematic (AutoSCH)
+OutputDocumentPath12=
+OutputVariantName12=
+OutputDefault12=0
+OutputType13=Orcad v7 Capture Design
+OutputName13=Orcad v7 Capture Design (AutoSCH)
+OutputDocumentPath13=
+OutputVariantName13=
+OutputDefault13=0
+OutputType14=P-CAD ASCII
+OutputName14=P-CAD ASCII (AutoPCB)
+OutputDocumentPath14=
+OutputVariantName14=
+OutputDefault14=0
+OutputType15=P-CAD V16 Schematic Design
+OutputName15=P-CAD V16 Schematic Design (AutoSCH)
+OutputDocumentPath15=
+OutputVariantName15=
+OutputDefault15=0
+OutputType16=Protel PCB 2.8 ASCII
+OutputName16=Protel PCB 2.8 ASCII (AutoPCB)
+OutputDocumentPath16=
+OutputVariantName16=
+OutputDefault16=0
+OutputType17=SiSoft
+OutputName17=SiSoft (AutoPCB)
+OutputDocumentPath17=
+OutputVariantName17=
+OutputDefault17=0
 
 [OutputGroup10]
 Name=PostProcess Outputs
@@ -1126,7 +1214,7 @@ Type112=1
 Type113=1
 
 [ERC Connection Matrix]
-L1=NNNNNNNNNNNWNNNWW
+L1=NNNNNNNNNNNWNNNWN
 L2=NNWNNNNWWWNWNWNWN
 L3=NWEENEEEENEWNEEWN
 L4=NNENNNWEENNWNENWN
@@ -1142,7 +1230,7 @@ L13=NNNNNNNNNNNWNNNWW
 L14=NWEENEEEENEWNEEWW
 L15=NNENNNNEEENWNENWW
 L16=WWWWNWWNWWWNWWWNW
-L17=WNNNNNNNWNNNWWWWN
+L17=NNNNNNNNWNNNWWWWN
 
 [Annotate]
 SortOrder=3

@@ -1,0 +1,16 @@
+Added Component: Designator=U4(LTC-4627JS)
+Add component. Clean all parameters for all variants
+Added Pin To Net: NetName=NetQ5_1 Pin=U4-1
+Added Pin To Net: NetName=NetQ4_1 Pin=U4-2
+Added Pin To Net: NetName=NetR5_2 Pin=U4-3
+Added Pin To Net: NetName=NetQ3_1 Pin=U4-4
+Added Pin To Net: NetName=NetR4_2 Pin=U4-5
+Added Pin To Net: NetName=NetQ2_1 Pin=U4-6
+Added Pin To Net: NetName=NetR1_2 Pin=U4-7
+Added Pin To Net: NetName=NetQ1_1 Pin=U4-8
+Added Pin To Net: NetName=NetR3_2 Pin=U4-11
+Added Pin To Net: NetName=NetR6_2 Pin=U4-13
+Added Pin To Net: NetName=NetR8_2 Pin=U4-14
+Added Pin To Net: NetName=NetR2_2 Pin=U4-15
+Added Pin To Net: NetName=NetR7_2 Pin=U4-16
+Added Room: Name=audioAmp

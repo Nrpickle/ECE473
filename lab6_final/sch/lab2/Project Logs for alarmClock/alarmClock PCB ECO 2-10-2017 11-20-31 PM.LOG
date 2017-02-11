@@ -1,0 +1,10 @@
+Added Component: Designator=SW1(ENCODER)
+Add component. Clean all parameters for all variants
+Added Component: Designator=SW2(ENCODER)
+Add component. Clean all parameters for all variants
+Added Pin To Net: NetName=NetR18_1 Pin=SW1-1
+Added Pin To Net: NetName=GND Pin=SW1-2
+Added Pin To Net: NetName=NetR19_1 Pin=SW1-3
+Added Pin To Net: NetName=NetR20_1 Pin=SW2-1
+Added Pin To Net: NetName=GND Pin=SW2-2
+Added Pin To Net: NetName=NetR21_1 Pin=SW2-3

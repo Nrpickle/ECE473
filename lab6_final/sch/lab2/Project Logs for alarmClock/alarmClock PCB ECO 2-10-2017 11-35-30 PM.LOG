@@ -1,0 +1,21 @@
+Added Component: Designator=U8(DIP20)
+Add component. Clean all parameters for all variants
+Added Pin To Net: NetName=GND Pin=U8-1
+Added Pin To Net: NetName=NetLS1_1 Pin=U8-2
+Added Pin To Net: NetName=5v_SYS Pin=U8-3
+Added Pin To Net: NetName=NetC7_2 Pin=U8-4
+Added Pin To Net: NetName=NetC10_2 Pin=U8-5
+Added Pin To Net: NetName=5v_SYS Pin=U8-6
+Added Pin To Net: NetName=NetC12_2 Pin=U8-7
+Added Pin To Net: NetName=NetC9_2 Pin=U8-8
+Added Pin To Net: NetName=5v_SYS Pin=U8-9
+Added Pin To Net: NetName=NetLS2_1 Pin=U8-10
+Added Pin To Net: NetName=GND Pin=U8-11
+Added Pin To Net: NetName=NetLS2_2 Pin=U8-12
+Added Pin To Net: NetName=NetR43_2 Pin=U8-14
+Added Pin To Net: NetName=NetR44_2 Pin=U8-15
+Added Pin To Net: NetName=NetC11_2 Pin=U8-16
+Added Pin To Net: NetName=GND Pin=U8-17
+Added Pin To Net: NetName=NetC8_2 Pin=U8-18
+Added Pin To Net: NetName=NetLS1_2 Pin=U8-20
+Added Member To Class: ClassName=audioAmp Member=Component U8 TPA6021A4 Amplifier

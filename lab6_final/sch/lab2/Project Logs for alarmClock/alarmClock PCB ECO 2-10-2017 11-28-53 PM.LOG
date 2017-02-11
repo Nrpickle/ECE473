@@ -1,0 +1,45 @@
+Removed Member From Class: ClassName=audioAmp Member=C2
+Removed Member From Class: ClassName=audioAmp Member=C19
+Removed Member From Class: ClassName=radio Member=C19
+Removed Member From Class: ClassName=audioAmp Member=R11
+Removed Member From Class: ClassName=radio Member=R11
+Removed Member From Class: ClassName=audioAmp Member=R16
+Removed Member From Class: ClassName=radio Member=R16
+Removed Member From Class: ClassName=audioAmp Member=R20
+Removed Member From Class: ClassName=audioAmp Member=R25
+Removed Member From Class: ClassName=audioAmp Member=R30
+Removed Member From Class: ClassName=radio Member=R35
+Removed Member From Class: ClassName=radio Member=R38
+Removed Member From Class: ClassName=radio Member=R40
+Removed Member From Class: ClassName=audioAmp Member=R41
+Removed Member From Class: ClassName=radio Member=R43
+Removed Member From Class: ClassName=audioAmp Member=R47
+Removed Member From Class: ClassName=radio Member=R47
+Removed Member From Class: ClassName=audioAmp Member=R49
+Removed Member From Class: ClassName=audioAmp Member=R54
+Removed Member From Class: ClassName=audioAmp Member=U4
+Removed Member From Class: ClassName=radio Member=U9
+Added Member To Class: ClassName=audioAmp Member=Component C14 0805 style, by default
+Added Member To Class: ClassName=audioAmp Member=Component C15 0805 style, by default
+Added Member To Class: ClassName=radio Member=Component C33 0805 style, by default
+Added Member To Class: ClassName=radio Member=Component C34 0805 style, by default
+Added Member To Class: ClassName=audioAmp Member=Component R32 10K
+Added Member To Class: ClassName=audioAmp Member=Component R34 100K
+Added Member To Class: ClassName=audioAmp Member=Component R35 100K
+Added Member To Class: ClassName=audioAmp Member=Component R36 330K
+Added Member To Class: ClassName=audioAmp Member=Component R38 5.7K
+Added Member To Class: ClassName=audioAmp Member=Component R40 100K
+Added Member To Class: ClassName=audioAmp Member=Component R43 10K
+Added Member To Class: ClassName=audioAmp Member=Component R44 10K
+Added Member To Class: ClassName=audioAmp Member=Component R45 1M
+Added Member To Class: ClassName=radio Member=Component R48 1K
+Added Member To Class: ClassName=radio Member=Component R49 10K
+Added Member To Class: ClassName=radio Member=Component R52 DNP
+Added Member To Class: ClassName=radio Member=Component R53 1K
+Added Member To Class: ClassName=radio Member=Component R54 10K
+Added Member To Class: ClassName=radio Member=Component R55 10K
+Added Member To Class: ClassName=radio Member=Component R56 10K
+Added Member To Class: ClassName=audioAmp Member=Component U7 LMC6032IMX
+Added Member To Class: ClassName=radio Member=Component U13 Si4734-D60-GM
+Added Member To Class: ClassName=radio Member=Component U14 CM1213A-01SO
+Added Member To Class: ClassName=radio Member=Component U15 Sparkfun LLC

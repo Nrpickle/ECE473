@@ -1,0 +1,7 @@
+Added Component: Designator=T1(WB Series RF Transformers)
+Add component. Clean all parameters for all variants
+Added Pin To Net: NetName=NetC25_2 Pin=T1-1
+Added Pin To Net: NetName=GND Pin=T1-3
+Added Pin To Net: NetName=NetT1_4 Pin=T1-4
+Added Pin To Net: NetName=NetT1_6 Pin=T1-6
+Added Member To Class: ClassName=radio Member=Component T1 RF Transformer

@@ -1,0 +1,47 @@
+Added Component: Designator=U11(SOT95P245X110-5N)
+Add component. Clean all parameters for all variants
+Add component (AddParameter): Name = "Case/Package"; Value = "SOT-23-5"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "https://datasheet.ciiva.com/4886/fan2500-192391-4886672.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://datasheet.ciiva.com/4886/fan2500-192391-4886672.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2Description"; Value = "https://datasheet.ciiva.com/8239/fan2501-8239552.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2URL"; Value = "https://datasheet.ciiva.com/8239/fan2501-8239552.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3Description"; Value = "https://datasheet.ciiva.com/16747/fan2500-16747543.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3URL"; Value = "https://datasheet.ciiva.com/16747/fan2500-16747543.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4Description"; Value = "https://datasheet.ciiva.com/46426/1727616-46426263.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4URL"; Value = "https://datasheet.ciiva.com/46426/1727616-46426263.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5Description"; Value = "https://datasheet.ciiva.com/8241/fan2501-8241034.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5URL"; Value = "https://datasheet.ciiva.com/8241/fan2501-8241034.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6Description"; Value = "https://datasheet.ciiva.com/2039/fan2500-2039339.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink6URL"; Value = "https://datasheet.ciiva.com/2039/fan2500-2039339.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7Description"; Value = "https://datasheet.ciiva.com/48696/001252307-da-01-en-ic-reg-ldo-3-3v-fan2500s33x-sot-23-5-fsc-48696763.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink7URL"; Value = "https://datasheet.ciiva.com/48696/001252307-da-01-en-ic-reg-ldo-3-3v-fan2500s33x-sot-23-5-fsc-48696763.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8Description"; Value = "https://datasheet.ciiva.com/2039/fan2500-2039340.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink8URL"; Value = "https://datasheet.ciiva.com/2039/fan2500-2039340.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Dropout Voltage"; Value = "140"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Fairchild Semiconductor"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Part Number"; Value = "FAN2500S33X"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Max Input Voltage"; Value = "6.5"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Max Operating Temperature"; Value = "125"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Max Ouput Current"; Value = "100"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Min Input Voltage"; Value = "2.7"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Min Operating Temperature"; Value = "-40"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mount"; Value = "Surface Mount"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Nominal Output Voltage"; Value = "3.3"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Output Current"; Value = "100"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Outputs"; Value = "1"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Output Voltage"; Value = "3.3"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Package Quantity"; Value = "3000"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Packaging"; Value = "Tape and Reel"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pins"; Value = "5"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pricing 1"; Value = "1=0.63, 10=0.557, 100=0.4259, 500=0.3374, 1000=0.2703 (USD)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Radiation Hardening"; Value = "No"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "REACH SVHC"; Value = "No SVHC"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Stock 1"; Value = "32735"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier 1"; Value = "Digikey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier Part Number 1"; Value = "FAN2500S33XCT-ND"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=NetC28_2 Pin=U11-1
+Added Pin To Net: NetName=GND Pin=U11-2
+Added Pin To Net: NetName=NetU11_3 Pin=U11-3
+Added Pin To Net: NetName=NetC29_2 Pin=U11-4
+Added Pin To Net: NetName=NetJ1_2 Pin=U11-5
+Added Member To Class: ClassName=radio Member=Component U11 3v3 Linear Reg

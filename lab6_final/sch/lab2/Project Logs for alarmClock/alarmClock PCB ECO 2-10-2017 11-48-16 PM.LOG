@@ -1,0 +1,5 @@
+Added Component: Designator=J1(Jumper)
+Add component. Clean all parameters for all variants
+Added Pin To Net: NetName=RADIO_VDD Pin=J1-1
+Added Pin To Net: NetName=NetJ1_2 Pin=J1-2
+Added Member To Class: ClassName=radio Member=Component J1 Jumper

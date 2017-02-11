@@ -1,0 +1,48 @@
+Added Component: Designator=J2(DSUB CONNECTOR)
+Add component. Clean all parameters for all variants
+Add component (AddParameter): Name = "Category"; Value = "Connectors, Interconnects"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Color"; Value = "Black"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1Description"; Value = "https://datasheet.ciiva.com/16915/70236919-16915382.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink1URL"; Value = "https://datasheet.ciiva.com/16915/70236919-16915382.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2Description"; Value = "https://datasheet.ciiva.com/15177/getdatasheetpartid-123290-15177610.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink2URL"; Value = "https://datasheet.ciiva.com/15177/getdatasheetpartid-123290-15177610.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3Description"; Value = "https://datasheet.ciiva.com/10376/c01-8646-0151-10376667.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink3URL"; Value = "https://datasheet.ciiva.com/10376/c01-8646-0151-10376667.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4Description"; Value = "https://datasheet.ciiva.com/652/c01-8646-0151-652476.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink4URL"; Value = "https://datasheet.ciiva.com/652/c01-8646-0151-652476.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5Description"; Value = "https://datasheet.ciiva.com/16663/c01-8646-0151-16663004.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "ComponentLink5URL"; Value = "https://datasheet.ciiva.com/16663/c01-8646-0151-16663004.pdf"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Connector Style"; Value = "D-Sub"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Connector Type"; Value = "Plug, Male Pins"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Finish"; Value = "Gold"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Finish Thickness"; Value = "Flash"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Contact Type"; Value = "Signal"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Current Rating"; Value = "5A"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Family"; Value = "D-Sub Connectors"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Features"; Value = "Board Lock, Grounding Indents"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Flange Feature"; Value = "Mating Side, Female Screwlock (4-40)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Housing Material"; Value = "Polybutylene Terephthalate (PBT)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Ingress Protection"; Value = "-"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer"; Value = "Amphenol / FCI"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Manufacturer Part Number"; Value = "D09P33E4GV00LF"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Mounting Type"; Value = "Through Hole, Right Angle"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Positions"; Value = "9"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Number of Rows"; Value = "2"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Operating Temperature"; Value = "-55°C ~ 125°C"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Packaging"; Value = "Tray"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Pricing 1"; Value = "1=2.3, 10=2.086, 25=1.958, 50=1.8728, 100=1.7877, 250=1.6175, 500=1.4898, 1000=1.277, 2500=1.1918 (USD)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Series"; Value = "Delta D"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Shell Material, Finish"; Value = "Steel, Tin Plated"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Shell Size, Connector Layout"; Value = "1 (DE, E)"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Stock 1"; Value = "5536"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier 1"; Value = "Digikey"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Supplier Part Number 1"; Value = "609-1480-ND"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Termination"; Value = "Solder"; VariantName = "[No Variations]"
+Add component (AddParameter): Name = "Voltage Rating"; Value = "300V"; VariantName = "[No Variations]"
+Added Pin To Net: NetName=GND Pin=J2-5
+Added Pin To Net: NetName=NetJ2_2 Pin=J2-2
+Added Pin To Net: NetName=NetJ2_2 Pin=U10-13
+Added Net: Name=NetJ2_2
+Added Pin To Net: NetName=NetJ2_3 Pin=J2-3
+Added Pin To Net: NetName=NetJ2_3 Pin=U10-14
+Added Net: Name=NetJ2_3
